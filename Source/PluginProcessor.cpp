@@ -47,6 +47,72 @@ juce::String generateSlopeParamString(int filterNum)
 }
 
 
+//==============================================================================
+/*
+ https://docs.juce.com/master/structdsp_1_1IIR_1_1Coefficients.html
+ */
+
+struct CoefficientMaker
+{
+    
+    static auto makeCoefficients(FilterInfo::FilterType filterType,
+                     float freq,
+                     float qual,
+                     float gain,
+                     double sampleRate)
+    {
+        using namespace juce::dsp::IIR;
+        
+        switch ( filterType )
+        {
+            case FilterInfo::FilterType::FirstOrderLowPass:
+                return Coefficients<float>::makeFirstOrderLowPass(sampleRate, freq);
+            case FilterInfo::FilterType::FirstOrderHighPass:
+                return Coefficients<float>::makeFirstOrderHighPass(sampleRate, freq);
+            case FilterInfo::FilterType::FirstOrderAllPass:
+                return Coefficients<float>::makeFirstOrderAllPass(sampleRate, freq);
+            case FilterInfo::FilterType::LowPass:
+                return Coefficients<float>::makeLowPass(sampleRate, freq, qual);
+            case FilterInfo::FilterType::HighPass:
+                return Coefficients<float>::makeHighPass(sampleRate, freq, qual);
+            case FilterInfo::FilterType::BandPass:
+                return Coefficients<float>::makeBandPass(sampleRate, freq, qual);
+            case FilterInfo::FilterType::Notch:
+                return Coefficients<float>::makeNotch(sampleRate, freq, qual);
+            case FilterInfo::FilterType::AllPass:
+                return Coefficients<float>::makeAllPass(sampleRate, freq, qual);
+            case FilterInfo::FilterType::LowShelf:
+                return Coefficients<float>::makeLowShelf(sampleRate, freq, qual, gain);
+            case FilterInfo::FilterType::HighShelf:
+                return Coefficients<float>::makeHighShelf(sampleRate, freq, qual, gain);
+            case FilterInfo::FilterType::Peak:
+                return Coefficients<float>::makePeakFilter(sampleRate, freq, qual, gain);
+        }
+        
+    }
+    
+    static auto makeCoefficients(FilterParameters filterParams)
+    {
+        return makeCoefficients(filterParams.filterType, filterParams.frequency, filterParams.quality, filterParams.gain, filterParams.sampleRate);
+    }
+    
+    static auto makeCoefficients(HighCutLowCutParameters filterParams)
+    {
+        if (filterParams.isLowcut)
+        {
+            return juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(filterParams.frequency,
+                                                                                               filterParams.sampleRate,
+                                                                                               filterParams.order);
+        }
+        return juce::dsp::FilterDesign<float>::designIIRLowpassHighOrderButterworthMethod(filterParams.frequency,
+                                                                                          filterParams.sampleRate,
+                                                                                          filterParams.order);
+    }
+    
+    
+    
+};
+
 
 //==============================================================================
 Project11v2AudioProcessor::Project11v2AudioProcessor()
@@ -226,18 +292,14 @@ void Project11v2AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        auto* channelData = buffer.getWritePointer (channel);
+    // test filter functions
+    FilterParameters filterParams;  //use default values;
+    auto coefficients = CoefficientMaker::makeCoefficients(filterParams);
+       
+    HighCutLowCutParameters lowCutParams;
+    auto coefficientsArray = CoefficientMaker::makeCoefficients(lowCutParams);
+       //
 
-        // ..do something to the data...
-    }
 }
 
 //==============================================================================

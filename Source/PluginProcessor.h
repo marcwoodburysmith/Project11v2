@@ -105,7 +105,7 @@ struct FilterParametersBase
 struct FilterParameters : public FilterParametersBase
 {
     FilterInfo::FilterType filterType {FilterInfo::FilterType::LowPass};
-    float gainInDecibels {0.0f};
+    float gain {0.0f};
     
 };
 
@@ -164,8 +164,12 @@ public:
     juce::AudioProcessorValueTreeState apvts { *this, nullptr, "Parameters", createParameterLayout() };
     
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+    
+    
 
 private:
+    
+    
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Project11v2AudioProcessor)
 };
