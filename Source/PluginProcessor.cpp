@@ -9,6 +9,45 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+
+juce::String ParamString(juce::String label, int filterNum)
+{
+    return "Filter_" + juce::String(filterNum)+"_"+ label;
+}
+
+
+juce::String generateGainParamString(int filterNum)
+{
+    return ParamString("gain",filterNum);
+}
+
+juce::String generateQParamString(int filterNum)
+{
+    return ParamString("Q",filterNum);
+}
+
+juce::String generateFreqParamString(int filterNum)
+{
+    return ParamString("freq",filterNum);
+}
+
+juce::String generateTypeParamString(int filterNum)
+{
+    return ParamString("type",filterNum);
+}
+
+juce::String generateBypassParamString(int filterNum)
+{
+    return ParamString("bypass",filterNum);
+}
+
+juce::String generateSlopeParamString(int filterNum)
+{
+    return ParamString("slope",filterNum);
+}
+
+
+
 //==============================================================================
 Project11v2AudioProcessor::Project11v2AudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -27,6 +66,49 @@ Project11v2AudioProcessor::Project11v2AudioProcessor()
 Project11v2AudioProcessor::~Project11v2AudioProcessor()
 {
 }
+
+//==============================================================================
+
+juce::AudioProcessorValueTreeState::ParameterLayout Project11v2AudioProcessor::createParameterLayout()
+{
+    juce::AudioProcessorValueTreeState::ParameterLayout layout;
+    
+    const int versionID = 1;
+    
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateGainParamString(0), versionID},
+               generateGainParamString(0),
+               juce::NormalisableRange<float>(-24.f, 24.f, 0.5f, 1.f),
+                                                           0.f));
+    
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateQParamString(0), versionID},
+                                                           generateQParamString(0),
+                                                           juce::NormalisableRange<float>(0.f, 10.f, 0.5f, 1.0f),
+                                                           1.f));
+    
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateFreqParamString(0), versionID},
+                                                          generateFreqParamString(0),
+                                                          juce::NormalisableRange<float>(20.f, 20000.f, 10.f, 20.f),
+                                                          440.f));
+    
+    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID{generateBypassParamString(0),versionID},                                                   generateBypassParamString(0),
+                                                          false));
+    
+    
+    juce::StringArray types;
+    
+    for ( const auto& [name, stringRep] : FilterInfo::filterToString)
+    {
+        types.add(stringRep);
+    }
+    
+    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{generateTypeParamString(0), versionID},
+                                                            generateTypeParamString(0),
+                                                            types,
+                                                            0));
+    
+    return layout;
+}
+
 
 //==============================================================================
 const juce::String Project11v2AudioProcessor::getName() const
@@ -166,7 +248,8 @@ bool Project11v2AudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* Project11v2AudioProcessor::createEditor()
 {
-    return new Project11v2AudioProcessorEditor (*this);
+//    return new Project11v2AudioProcessorEditor (*this);
+    return new juce::GenericAudioProcessorEditor(*this);
 }
 
 //==============================================================================
