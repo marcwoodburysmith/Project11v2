@@ -92,6 +92,35 @@ const std::map<Slope, juce::String> slopeToString
 } //end namespace FilterInfo
 
 //==============================================================================
+
+struct FilterParametersBase
+{
+    float frequency {440.f};
+    bool bypassed {false};
+    float quality {1.f};
+    double sampleRate {44100};
+    
+};
+
+struct FilterParameters : public FilterParametersBase
+{
+    FilterInfo::FilterType filterType {FilterInfo::FilterType::LowPass};
+    float gainInDecibels {0.0f};
+    
+};
+
+struct HighCutLowCutParameters : public FilterParametersBase
+{
+    int order {1};
+    bool isLowcut {true};
+    
+};
+
+
+
+
+
+//==============================================================================
 /**
 */
 class Project11v2AudioProcessor  : public juce::AudioProcessor
