@@ -4,6 +4,19 @@
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1">
   <MAINGROUP id="BckxKw" name="Project11v2">
     <GROUP id="{9814709B-2041-D145-8BD5-23809E81AABF}" name="Source">
+      <FILE id="Agvo7u" name="ParameterHelpers.cpp" compile="1" resource="0"
+            file="Source/ParameterHelpers.cpp"/>
+      <FILE id="TwkB1j" name="ParameterHelpers.h" compile="0" resource="0"
+            file="Source/ParameterHelpers.h"/>
+      <FILE id="NPtDlu" name="CoefficientsMaker.h" compile="0" resource="0"
+            file="Source/CoefficientsMaker.h"/>
+      <FILE id="t7v56T" name="HighCutLowCutParameters.h" compile="0" resource="0"
+            file="Source/HighCutLowCutParameters.h"/>
+      <FILE id="UxeDWM" name="FilterParametersBase.h" compile="0" resource="0"
+            file="Source/FilterParametersBase.h"/>
+      <FILE id="txD2ZI" name="FilterParameters.h" compile="0" resource="0"
+            file="Source/FilterParameters.h"/>
+      <FILE id="LrwcAo" name="FilterInfo.h" compile="0" resource="0" file="Source/FilterInfo.h"/>
       <FILE id="LNjoRV" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
       <FILE id="NBvKoa" name="PluginProcessor.h" compile="0" resource="0"
