@@ -68,6 +68,17 @@ public:
     
 
 private:
+    using Filter = juce::dsp::IIR::Filter<float>;
+    
+    using MonoChain = juce::dsp::ProcessorChain<Filter>;
+    
+    MonoChain leftChain, rightChain;
+    
+    FilterParameters oldParams;
+    HighCutLowCutParameters oldHighLow;
+    
+    FilterInfo::FilterType oldFilterType;
+    
     
     
     //==============================================================================

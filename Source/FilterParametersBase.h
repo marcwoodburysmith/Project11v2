@@ -19,3 +19,13 @@ struct FilterParametersBase
     double sampleRate {44100};
     
 };
+
+inline bool operator==(const FilterParametersBase& lhs, const FilterParametersBase& rhs)
+{
+    return (lhs.frequency == rhs.frequency && lhs.bypassed == rhs.bypassed && lhs.quality == rhs.quality && lhs.sampleRate == rhs.sampleRate );
+}
+
+inline bool operator!=(const FilterParametersBase& lhs, const FilterParametersBase& rhs)
+{
+    return !(lhs == rhs);
+}
