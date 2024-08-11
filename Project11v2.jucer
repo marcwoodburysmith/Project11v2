@@ -4,6 +4,7 @@
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1">
   <MAINGROUP id="BckxKw" name="Project11v2">
     <GROUP id="{9814709B-2041-D145-8BD5-23809E81AABF}" name="Source">
+      <FILE id="iUX0qV" name="Decibel.h" compile="0" resource="0" file="Source/Decibel.h"/>
       <FILE id="Agvo7u" name="ParameterHelpers.cpp" compile="1" resource="0"
             file="Source/ParameterHelpers.cpp"/>
       <FILE id="TwkB1j" name="ParameterHelpers.h" compile="0" resource="0"
