@@ -79,6 +79,8 @@ private:
     
     FilterInfo::FilterType oldFilterType;
     
+    void updateFilters(double sampleRate);
+    
     
     
     //==============================================================================

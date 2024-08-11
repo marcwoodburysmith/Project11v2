@@ -33,6 +33,72 @@ Project11v2AudioProcessor::Project11v2AudioProcessor()
 Project11v2AudioProcessor::~Project11v2AudioProcessor()
 {
 }
+//==============================================================================
+
+void Project11v2AudioProcessor::updateFilters(double sampleRate)
+{
+    auto gain = apvts.getRawParameterValue(generateGainParamString(0))->load();
+    auto qual = apvts.getRawParameterValue(generateQParamString(0))->load();
+    auto freq = apvts.getRawParameterValue(generateFreqParamString(0))->load();
+    bool bypass = apvts.getRawParameterValue(generateBypassParamString(0))->load() > 0.5f;
+    
+    
+    FilterInfo::FilterType type = static_cast<FilterInfo::FilterType>(apvts.getRawParameterValue(generateTypeParamString(0))->load() );
+    
+    if( type == FilterInfo::FilterType::LowPass || type == FilterInfo::FilterType::HighPass || type == FilterInfo::FilterType::FirstOrderHighPass || type == FilterInfo::FilterType::FirstOrderLowPass )
+    {
+        HighCutLowCutParameters cutParams;
+        
+        cutParams.isLowcut = ( type == FilterInfo::FilterType::LowPass || type == FilterInfo::FilterType::FirstOrderLowPass );
+        cutParams.frequency = freq;
+        cutParams.bypassed = bypass;
+        cutParams.order = 1;
+        
+        if (type == FilterInfo::FilterType::HighPass || type == FilterInfo::FilterType::LowPass)
+                    cutParams.order = 2;
+        
+        cutParams.sampleRate = getSampleRate();
+        cutParams.quality = qual;
+        
+        if( type != oldFilterType || cutParams != oldHighLow )
+        {
+            auto chainCoefficients = CoefficientMaker::makeCoefficients(cutParams);
+            leftChain.setBypassed<0>(bypass);
+            rightChain.setBypassed<0>(bypass);
+            *(leftChain.get<0>().coefficients) = *(chainCoefficients[0]);
+            *(rightChain.get<0>().coefficients) = *(chainCoefficients[0]);
+        }
+        
+        
+        oldHighLow = cutParams;
+        
+    }
+    else
+    {
+        FilterParameters parametricParams;
+        
+        parametricParams.gain = gain;
+        parametricParams.frequency = freq;
+        parametricParams.sampleRate = getSampleRate();
+        parametricParams.quality = qual;
+        parametricParams.bypassed = bypass;
+        parametricParams.filterType = type;
+        
+        if ( type != oldFilterType || parametricParams != oldParams )
+        {
+            auto chainCoefficients = CoefficientMaker::makeCoefficients(parametricParams);
+            leftChain.setBypassed<0>(bypass);
+            rightChain.setBypassed<0>(bypass);
+            *(leftChain.get<0>().coefficients) = *chainCoefficients;
+            *(rightChain.get<0>().coefficients) = *chainCoefficients;
+        }
+        
+        oldParams = parametricParams;
+    }
+    
+    
+}
+
 
 //==============================================================================
 
@@ -192,6 +258,8 @@ void Project11v2AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
     // this code if your algorithm always overwrites all the output channels.
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
+    
+    updateFilters( getSampleRate() );
 
     // test filter functions
 //    FilterParameters filterParams;  //use default values;
@@ -199,62 +267,6 @@ void Project11v2AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
 //       
 //    HighCutLowCutParameters lowCutParams;
 //    auto coefficientsArray = CoefficientMaker::makeCoefficients(lowCutParams);
-    auto gain = apvts.getRawParameterValue(generateGainParamString(0))->load();
-    auto qual = apvts.getRawParameterValue(generateQParamString(0))->load();
-    auto freq = apvts.getRawParameterValue(generateFreqParamString(0))->load();
-    bool bypass = apvts.getRawParameterValue(generateBypassParamString(0))->load() > 0.5f;
-    
-    
-    FilterInfo::FilterType type = static_cast<FilterInfo::FilterType>(apvts.getRawParameterValue(generateTypeParamString(0))->load() );
-    
-    if( type == FilterInfo::FilterType::LowPass || type == FilterInfo::FilterType::HighPass || type == FilterInfo::FilterType::FirstOrderHighPass || type == FilterInfo::FilterType::FirstOrderLowPass )
-    {
-        HighCutLowCutParameters cutParams;
-        
-        cutParams.isLowcut = ( type == FilterInfo::FilterType::LowPass || type == FilterInfo::FilterType::FirstOrderLowPass );
-        cutParams.frequency = freq;
-        cutParams.bypassed = bypass;
-        cutParams.order = 1;
-        
-        if (type == FilterInfo::FilterType::HighPass || type == FilterInfo::FilterType::LowPass)
-                    cutParams.order = 2;
-        
-        cutParams.sampleRate = getSampleRate();
-        cutParams.quality = qual;
-        
-        if( type != oldFilterType || cutParams != oldHighLow )
-        {
-            auto chainCoefficients = CoefficientMaker::makeCoefficients(cutParams);
-            leftChain.setBypassed<0>(bypass);
-            rightChain.setBypassed<0>(bypass);
-            *(leftChain.get<0>().coefficients) = *(chainCoefficients[0]);
-            *(rightChain.get<0>().coefficients) = *(chainCoefficients[0]);
-        }
-        
-        
-        
-        
-    }
-    else
-    {
-        FilterParameters parametricParams;
-        
-        parametricParams.gain = gain;
-        parametricParams.frequency = freq;
-        parametricParams.sampleRate = getSampleRate();
-        parametricParams.quality = qual;
-        parametricParams.bypassed = bypass;
-        parametricParams.filterType = type;
-        
-        if ( type != oldFilterType || parametricParams != oldParams )
-        {
-            auto chainCoefficients = CoefficientMaker::makeCoefficients(parametricParams);
-            leftChain.setBypassed<0>(bypass);
-            rightChain.setBypassed<0>(bypass);
-            *(leftChain.get<0>().coefficients) = *chainCoefficients;
-            *(rightChain.get<0>().coefficients) = *chainCoefficients;
-        }
-    }
     
 
 }
