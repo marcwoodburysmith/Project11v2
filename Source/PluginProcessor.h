@@ -15,13 +15,13 @@
 #include "HighCutLowCutParameters.h"
 #include "ParameterHelpers.h"
 #include "CoefficientsMaker.h"
-#include "Fifo.h"
+
 
 using Filter = juce::dsp::IIR::Filter<float>;
-using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
-using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
+//using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
+using MonoChain = juce::dsp::ProcessorChain<Filter>;
 
-using ParamLayout = juce::AudioProcessorValueTreeState::ParameterLayout;
+//using ParamLayout = juce::AudioProcessorValueTreeState::ParameterLayout;
 
 //==============================================================================
 /**
@@ -75,7 +75,9 @@ public:
 private:
     
     
-    void addFilterParamToLayout( ParamLayout&, int, bool );
+//    void addFilterParamToLayout(juce::AudioProcessorValueTreeState::ParameterLayout& layout,
+//                                int filterNum,
+//                                bool isCut);
     
     
     MonoChain leftChain, rightChain;
