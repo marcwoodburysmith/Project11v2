@@ -37,6 +37,9 @@ Project11v2AudioProcessor::~Project11v2AudioProcessor()
 
 void Project11v2AudioProcessor::updateFilters(double sampleRate)
 {
+    
+    int filterNum = 0;
+    
     auto gain = apvts.getRawParameterValue(generateGainParamString(0))->load();
     auto qual = apvts.getRawParameterValue(generateQParamString(0))->load();
     auto freq = apvts.getRawParameterValue(generateFreqParamString(0))->load();
@@ -60,7 +63,7 @@ void Project11v2AudioProcessor::updateFilters(double sampleRate)
         cutParams.sampleRate = getSampleRate();
         cutParams.quality = qual;
         
-        if( type != oldFilterType || cutParams != oldHighLow )
+        if( type != oldFilterType || cutParams != oldCutParams )
         {
             auto chainCoefficients = CoefficientMaker::makeCoefficients(cutParams);
             leftChain.setBypassed<0>(bypass);
@@ -70,7 +73,7 @@ void Project11v2AudioProcessor::updateFilters(double sampleRate)
         }
         
         
-        oldHighLow = cutParams;
+        oldCutParams = cutParams;
         
     }
     else
@@ -84,7 +87,7 @@ void Project11v2AudioProcessor::updateFilters(double sampleRate)
         parametricParams.bypassed = bypass;
         parametricParams.filterType = type;
         
-        if ( type != oldFilterType || parametricParams != oldParams )
+        if ( type != oldFilterType || parametricParams != oldParametricParams )
         {
             auto chainCoefficients = CoefficientMaker::makeCoefficients(parametricParams);
             leftChain.setBypassed<0>(bypass);
@@ -93,7 +96,7 @@ void Project11v2AudioProcessor::updateFilters(double sampleRate)
             *(rightChain.get<0>().coefficients) = *chainCoefficients;
         }
         
-        oldParams = parametricParams;
+        oldParametricParams = parametricParams;
     }
     
     
@@ -102,42 +105,73 @@ void Project11v2AudioProcessor::updateFilters(double sampleRate)
 
 //==============================================================================
 
-juce::AudioProcessorValueTreeState::ParameterLayout Project11v2AudioProcessor::createParameterLayout()
+void Project11v2AudioProcessor::addFilterParamToLayout(ParamLayout& layout,
+                                                            int filterNum,
+                                                            bool isCut)
 {
-    juce::AudioProcessorValueTreeState::ParameterLayout layout;
+   
     
     const int versionID = 1;
     
-    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateGainParamString(0), versionID},
-               generateGainParamString(0),
-               juce::NormalisableRange<float>(-24.f, 24.f, 0.5f, 1.f),
-                                                           0.f));
-    
-    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateQParamString(0), versionID},
-                                                           generateQParamString(0),
-                                                           juce::NormalisableRange<float>(0.f, 10.f, 0.5f, 1.0f),
-                                                           1.f));
+    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID{generateBypassParamString(0),versionID},                                                   generateBypassParamString(0),
+                                                          false));
     
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateFreqParamString(0), versionID},
                                                           generateFreqParamString(0),
                                                           juce::NormalisableRange<float>(20.f, 20000.f, 10.f, 20.f),
                                                           440.f));
     
-    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID{generateBypassParamString(0),versionID},                                                   generateBypassParamString(0),
-                                                          false));
+   if (!isCut)
+   {
+       layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateGainParamString(0), versionID},
+                  generateGainParamString(0),
+                  juce::NormalisableRange<float>(-24.f, 24.f, 0.5f, 1.f),
+                                                              0.f));
+       
+       layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateQParamString(0), versionID},
+                                                              generateQParamString(0),
+                                                              juce::NormalisableRange<float>(0.f, 10.f, 0.5f, 1.0f),
+                                                              1.f));
+       
+       
+       juce::StringArray types;
+       
+       for ( const auto& [name, stringRep] : FilterInfo::filterToString)
+       {
+           types.add(stringRep);
+       }
+       
+       layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{generateTypeParamString(0), versionID},
+                                                               generateTypeParamString(0),
+                                                               types,
+                                                               0));
+            
+   }
+   else
+   {
+       juce::StringArray slopes;
+               
+       for (const auto& [order, stringRep] : FilterInfo::slopeToString)
+       {
+           slopes.add(stringRep);
+       }
+
+       layout.add(std::make_unique<juce::AudioParameterChoice>(generateSlopeParamString(filterNum),
+                                                               generateSlopeParamString(filterNum), slopes, 0));
+       
+   }
     
+}
+
+
+
+juce::AudioProcessorValueTreeState::ParameterLayout Project11v2AudioProcessor::createParameterLayout()
+{
+    juce::AudioProcessorValueTreeState::ParameterLayout layout;
     
-    juce::StringArray types;
-    
-    for ( const auto& [name, stringRep] : FilterInfo::filterToString)
-    {
-        types.add(stringRep);
-    }
-    
-    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{generateTypeParamString(0), versionID},
-                                                            generateTypeParamString(0),
-                                                            types,
-                                                            0));
+    addFilterParamToLayout(layout, 0, true);
+    addFilterParamToLayout(layout, 1, false);
+    addFilterParamToLayout(layout, 2, true);
     
     return layout;
 }
