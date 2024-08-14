@@ -71,6 +71,12 @@ public:
     
 
 private:
+    
+    using Filter = juce::dsp::IIR::Filter<float>;
+    
+    using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
+    
+    using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
     /*
      This templated function needs some work to add in filterNums which can be 0, 1 0r 2 for the 3 band filter
      This will need to be called 3 times in ProcessBlock for the three chains in the filter:
@@ -341,13 +347,9 @@ private:
         rightSubChain.template setBypassed<3>(true);
     }
     
-    void updateFilters(double sampleRate);
+    void updateFilters(double sampleRate, bool forceUpdate);
 
-    using Filter = juce::dsp::IIR::Filter<float>;
     
-    using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
-    
-    using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
     
     MonoChain leftChain, rightChain;
     

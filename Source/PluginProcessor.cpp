@@ -95,7 +95,7 @@ void Project11v2AudioProcessor::addFilterParamToLayout (juce::AudioProcessorValu
             slopes.add(stringRep);
         }
         
-        layout.add(std::make_unique<juce::AudioParameterChoice>(generateTypeParamString(filterNum), generateTypeParamString(filterNum), slopes, 1));
+        layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{generateTypeParamString(filterNum), versionID}, generateTypeParamString(filterNum), slopes, 1));
     }
 
 }
@@ -109,10 +109,18 @@ juce::AudioProcessorValueTreeState::ParameterLayout Project11v2AudioProcessor::c
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
     
     addFilterParamToLayout(layout, 0, true);
-    addFilterParamToLayout(layout, 1, false);
-    addFilterParamToLayout(layout, 2, true);
+//    addFilterParamToLayout(layout, 1, false);
+//    addFilterParamToLayout(layout, 2, true);
     
     return layout;
+}
+
+
+void Project11v2AudioProcessor::updateFilters(double sampleRate, bool forceUpdate)
+{
+    updateCutFilter<0>(sampleRate, forceUpdate, oldHighCutParams, true);
+    updateParametricFilter<1>(sampleRate, forceUpdate);
+    updateCutFilter<2>(sampleRate, forceUpdate, oldLowCutParams, false);
 }
     
 
@@ -233,6 +241,7 @@ void Project11v2AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
     
+    updateFilters( getSampleRate(), false );
     
 
     // test filter functions
@@ -242,7 +251,6 @@ void Project11v2AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
 //    HighCutLowCutParameters lowCutParams;
 //    auto coefficientsArray = CoefficientMaker::makeCoefficients(lowCutParams);
     
-
 }
 
 //==============================================================================
