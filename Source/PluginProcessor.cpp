@@ -35,173 +35,145 @@ Project11v2AudioProcessor::~Project11v2AudioProcessor()
 }
 //==============================================================================
 
-void Project11v2AudioProcessor::updateFilters(double sampleRate)
+//void Project11v2AudioProcessor::updateFilters(double sampleRate)
+//{
+//    
+////    int filterNum = 0;
+//    
+//    auto gain = apvts.getRawParameterValue(generateGainParamString(0))->load();
+//    auto qual = apvts.getRawParameterValue(generateQParamString(0))->load();
+//    auto freq = apvts.getRawParameterValue(generateFreqParamString(0))->load();
+//    bool bypass = apvts.getRawParameterValue(generateBypassParamString(0))->load() > 0.5f;
+//    
+//    
+//    FilterInfo::FilterType type = static_cast<FilterInfo::FilterType>(apvts.getRawParameterValue(generateTypeParamString(0))->load() );
+//    
+//    if( type == FilterInfo::FilterType::LowPass || type == FilterInfo::FilterType::HighPass || type == FilterInfo::FilterType::FirstOrderHighPass || type == FilterInfo::FilterType::FirstOrderLowPass )
+//    {
+//        HighCutLowCutParameters cutParams;
+//        
+//        cutParams.isLowcut = ( type == FilterInfo::FilterType::LowPass || type == FilterInfo::FilterType::FirstOrderLowPass );
+//        cutParams.frequency = freq;
+//        cutParams.bypassed = bypass;
+//        cutParams.order = 1;
+//        
+//        if (type == FilterInfo::FilterType::HighPass || type == FilterInfo::FilterType::LowPass)
+//                    cutParams.order = 2;
+//        
+//        cutParams.sampleRate = getSampleRate();
+//        cutParams.quality = qual;
+//        
+//        if( type != oldFilterType || cutParams != oldCutParams )
+//        {
+//            auto chainCoefficients = CoefficientMaker::makeCoefficients(cutParams);
+//            leftChain.setBypassed<0>(bypass);
+//            rightChain.setBypassed<0>(bypass);
+//            *(leftChain.get<0>().coefficients) = *(chainCoefficients[0]);
+//            *(rightChain.get<0>().coefficients) = *(chainCoefficients[0]);
+//        }
+//        
+//        
+//        oldCutParams = cutParams;
+//        
+//    }
+//    else
+//    {
+//        FilterParameters parametricParams;
+//        
+//        parametricParams.gain = gain;
+//        parametricParams.frequency = freq;
+//        parametricParams.sampleRate = getSampleRate();
+//        parametricParams.quality = qual;
+//        parametricParams.bypassed = bypass;
+//        parametricParams.filterType = type;
+//        
+//        if ( type != oldFilterType || parametricParams != oldParametricParams )
+//        {
+//            auto chainCoefficients = CoefficientMaker::makeCoefficients(parametricParams);
+//            leftChain.setBypassed<0>(bypass);
+//            rightChain.setBypassed<0>(bypass);
+//            *(leftChain.get<0>().coefficients) = *chainCoefficients;
+//            *(rightChain.get<0>().coefficients) = *chainCoefficients;
+//        }
+//        
+//        oldParametricParams = parametricParams;
+//    }
+//    
+//    
+//}
+
+void Project11v2AudioProcessor::updateFilters(double sampleRate, bool forceUpdate)
 {
-    
-//    int filterNum = 0;
-    
-    auto gain = apvts.getRawParameterValue(generateGainParamString(0))->load();
-    auto qual = apvts.getRawParameterValue(generateQParamString(0))->load();
-    auto freq = apvts.getRawParameterValue(generateFreqParamString(0))->load();
-    bool bypass = apvts.getRawParameterValue(generateBypassParamString(0))->load() > 0.5f;
-    
-    
-    FilterInfo::FilterType type = static_cast<FilterInfo::FilterType>(apvts.getRawParameterValue(generateTypeParamString(0))->load() );
-    
-    if( type == FilterInfo::FilterType::LowPass || type == FilterInfo::FilterType::HighPass || type == FilterInfo::FilterType::FirstOrderHighPass || type == FilterInfo::FilterType::FirstOrderLowPass )
-    {
-        HighCutLowCutParameters cutParams;
-        
-        cutParams.isLowcut = ( type == FilterInfo::FilterType::LowPass || type == FilterInfo::FilterType::FirstOrderLowPass );
-        cutParams.frequency = freq;
-        cutParams.bypassed = bypass;
-        cutParams.order = 1;
-        
-        if (type == FilterInfo::FilterType::HighPass || type == FilterInfo::FilterType::LowPass)
-                    cutParams.order = 2;
-        
-        cutParams.sampleRate = getSampleRate();
-        cutParams.quality = qual;
-        
-        if( type != oldFilterType || cutParams != oldCutParams )
-        {
-            auto chainCoefficients = CoefficientMaker::makeCoefficients(cutParams);
-            leftChain.setBypassed<0>(bypass);
-            rightChain.setBypassed<0>(bypass);
-            *(leftChain.get<0>().coefficients) = *(chainCoefficients[0]);
-            *(rightChain.get<0>().coefficients) = *(chainCoefficients[0]);
-        }
-        
-        
-        oldCutParams = cutParams;
-        
-    }
-    else
-    {
-        FilterParameters parametricParams;
-        
-        parametricParams.gain = gain;
-        parametricParams.frequency = freq;
-        parametricParams.sampleRate = getSampleRate();
-        parametricParams.quality = qual;
-        parametricParams.bypassed = bypass;
-        parametricParams.filterType = type;
-        
-        if ( type != oldFilterType || parametricParams != oldParametricParams )
-        {
-            auto chainCoefficients = CoefficientMaker::makeCoefficients(parametricParams);
-            leftChain.setBypassed<0>(bypass);
-            rightChain.setBypassed<0>(bypass);
-            *(leftChain.get<0>().coefficients) = *chainCoefficients;
-            *(rightChain.get<0>().coefficients) = *chainCoefficients;
-        }
-        
-        oldParametricParams = parametricParams;
-    }
-    
-    
+    updateCutFilter<0>(sampleRate, forceUpdate, oldHighCutParams, true);
+    updateParametricFilter<1>(sampleRate, forceUpdate);
+    updateCutFilter<2>(sampleRate, forceUpdate, oldLowCutParams, false);
 }
 
 
 //==============================================================================
 
-//void Project11v2AudioProcessor::addFilterParamToLayout(juce::AudioProcessorValueTreeState::ParameterLayout& layout,
-//                                                            int filterNum,
-//                                                            bool isCut)
-//{
-//   
-//    
-//    const int versionID = 1;
-//    
-//    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID{generateBypassParamString(filterNum),versionID},                                                   generateBypassParamString(filterNum),
-//                                                          false));
-//    
-//    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateFreqParamString(filterNum), versionID},
-//                                                          generateFreqParamString(filterNum),
-//                                                          juce::NormalisableRange<float>(20.f, 20000.f, 10.f, 20.f),
-//                                                          440.f));
-//    
-//   if (!isCut)
-//   {
-//       layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateGainParamString(filterNum), versionID},
-//                  generateGainParamString(filterNum),
-//                  juce::NormalisableRange<float>(-24.f, 24.f, 0.5f, 1.f),
-//                                                              0.f));
-//       
-//       layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateQParamString(filterNum), versionID},
-//                                                              generateQParamString(filterNum),
-//                                                              juce::NormalisableRange<float>(0.f, 10.f, 0.5f, 1.0f),
-//                                                              1.f));
-//       
-//       
-//       juce::StringArray types;
-//       
-//       for ( const auto& [name, stringRep] : FilterInfo::filterToString)
-//       {
-//           types.add(stringRep);
-//       }
-//       
-//       layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{generateTypeParamString(filterNum), versionID},
-//                                                               generateTypeParamString(filterNum),
-//                                                               types,
-//                                                               0));
-//            
-//   }
-//   else
-//   {
-//       juce::StringArray slopes;
-//               
-//       for (const auto& [order, stringRep] : FilterInfo::slopeToString)
-//       {
-//           slopes.add(stringRep);
-//       }
-//
-//       layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{generateSlopeParamString(filterNum), versionID},
-//                                                               generateSlopeParamString(filterNum), slopes, 0));
-//       
-//   }
-//    
-//}
-//
+void Project11v2AudioProcessor::addFilterParamToLayout(juce::AudioProcessorValueTreeState::ParameterLayout& layout,
+                            int filterNum,
+                            bool isCut)
+{
+    const int versionID = 1;
+    
+    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID{generateBypassParamString(filterNum), versionID},generateBypassParamString(filterNum),false) );
+        
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateFreqParamString(filterNum), versionID}, generateFreqParamString(filterNum),
+                                       juce::NormalisableRange<float>(20.0f, 20000.0f, 1.0f, 0.25f), 20.0f));
+    
+    if (!isCut )
+    {
+        layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateQParamString(filterNum), versionID}, generateQParamString(filterNum),
+                                           juce::NormalisableRange<float>(0.1f, 10.f, 0.05f, 1.0f), 1.0f));
+        
+        layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateGainParamString(filterNum), versionID}, generateGainParamString(filterNum),
+                                           juce::NormalisableRange<float>(-24.f, 24.f, 0.5f, 1.0f), 0.0f));
+
+        
+        juce::StringArray types;
+        
+        for (const auto& [type, stringRep] : FilterInfo::filterToString)
+        {
+          //Verify map is sorted like I believe it is by the standard
+          // DBG( "Key as int:" + std::to_string(static_cast<int>(type)));
+            types.add(stringRep);
+        }
+        
+        
+        layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{generateTypeParamString(filterNum), versionID}, generateTypeParamString(filterNum), types, 0));
+        
+    }
+    else
+    {
+        juce::StringArray slopes;
+                
+                for (const auto& [order, stringRep] : FilterInfo::slopeToString)
+                {
+                    slopes.add(stringRep);
+                }
+
+        layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{generateSlopeParamString(filterNum), versionID},
+                                                                generateSlopeParamString(filterNum), slopes, 0));
+            
+    }
+
+}
 
 
 juce::AudioProcessorValueTreeState::ParameterLayout Project11v2AudioProcessor::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
-    
-//    addFilterParamToLayout(layout, 0, true);
-//    addFilterParamToLayout(layout, 1, false);
-//    addFilterParamToLayout(layout, 2, true);
-    
-    const int versionID = 1;
-    
-    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID{generateBypassParamString(0), versionID},generateBypassParamString(0),false) );
-        
-    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateFreqParamString(0), versionID}, generateFreqParamString(0),
-                                       juce::NormalisableRange<float>(20.0f, 20000.0f, 1.0f, 0.25f), 20.0f));
-    
-    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateQParamString(0), versionID}, generateQParamString(0),
-                                       juce::NormalisableRange<float>(0.1f, 10.f, 0.05f, 1.0f), 1.0f));
-    
-    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateGainParamString(0), versionID}, generateGainParamString(0),
-                                       juce::NormalisableRange<float>(-24.f, 24.f, 0.5f, 1.0f), 0.0f));
 
+    addFilterParamToLayout(layout, 0, true);
+    addFilterParamToLayout(layout, 1, false);
+    addFilterParamToLayout(layout, 2, true);
     
-    juce::StringArray types;
-    
-    for (const auto& [type, stringRep] : FilterInfo::filterToString)
-    {
-      //Verify map is sorted like I believe it is by the standard
-      // DBG( "Key as int:" + std::to_string(static_cast<int>(type)));
-        types.add(stringRep);
-    }
-    
-    
-    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{generateTypeParamString(0), versionID}, generateTypeParamString(0), types, 0));
-        
-      
     return layout;
 }
+
+
 
 
 //==============================================================================
