@@ -16,6 +16,7 @@
 #include "ParameterHelpers.h"
 #include "CoefficientsMaker.h"
 #include "Fifo.h"
+#include "FilterCoefficientGenerator.h"
 
 
 using Filter = juce::dsp::IIR::Filter<float>;
@@ -78,8 +79,6 @@ private:
        void updateParametricFilter(double sampleRate, bool forceUpdate)
        {
            using namespace FilterInfo;
-
-
            
            float frequency = apvts.getRawParameterValue(generateFreqParamString(filterNum))->load();
            float quality  = apvts.getRawParameterValue(generateQParamString(filterNum))->load();
@@ -210,7 +209,8 @@ private:
                //set up the four filters
                if(!bypassed)
                {
-                   
+                   /*not sure I understand this fully. See SimpleEQ Part 7 at 10 min point for simple version
+                   which is then refactored at 5min point in Part 8*/
                    switch(slope)
                    {
                        case Slope::Slope_48:
@@ -232,7 +232,6 @@ private:
                       }
                }
            }
-           // side effect update. Code smell?
            oldParams = cutParams;
        }
        
