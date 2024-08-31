@@ -18,8 +18,11 @@
 
 
 
+
+
+
 template <typename CoefficientType, typename ParamType, typename MakeFunction, size_t Size>
-struct FilterCoefficientGenerator : public juce::Thread
+struct FilterCoefficientGenerator : juce::Thread
 {
     FilterCoefficientGenerator(Fifo <CoefficientType, Size>& processFifo) : juce::Thread {"Filter Coefficient Generator Thread"}, coeffFifo{processFifo}
     {

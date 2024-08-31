@@ -106,21 +106,34 @@ private:
               
                if (forceUpdate || filterType != oldFilterType || cutParams != oldCutParams)
                {
-                   auto chainCoefficients = CoefficientMaker::makeCoefficients(cutParams);
-                   
-                   cutCoeffFifo.push(chainCoefficients);
-                   decltype(chainCoefficients) newChainCoefficients;
-                   cutCoeffFifo.pull(newChainCoefficients);
-                   
+//                   auto chainCoefficients = CoefficientsMaker::makeCoefficients(cutParams);
+//                   
+//                   cutCoeffFifo.push(chainCoefficients);
+//                   decltype(chainCoefficients) newChainCoefficients;
+//                   cutCoeffFifo.pull(newChainCoefficients);
+//                   
+//                   leftChain.setBypassed<filterNum>(bypassed);
+//                   rightChain.setBypassed<filterNum>(bypassed);
+//                   
+//                   // Later this will be multiple filters for each of the bands i think.
+//                   *(leftChain.get<filterNum>().coefficients) = *(newChainCoefficients[0]);
+//                   *(rightChain.get<filterNum>().coefficients) = *(newChainCoefficients[0]);
+                   cutCoeffGen.changeParameters(cutParams);
+               }
+           
+//               oldCutParams = cutParams;
+               CutCoeffArray newChainCoefficients;
+               bool newChainAvailable = cutCoeffFifo.pull(newChainCoefficients);
+               
+               if (newChainAvailable)
+               {
                    leftChain.setBypassed<filterNum>(bypassed);
                    rightChain.setBypassed<filterNum>(bypassed);
                    
-                   // Later this will be multiple filters for each of the bands i think.
                    *(leftChain.get<filterNum>().coefficients) = *(newChainCoefficients[0]);
                    *(rightChain.get<filterNum>().coefficients) = *(newChainCoefficients[0]);
                }
-           
-               oldCutParams = cutParams;
+   
            }
            else
            {
@@ -137,29 +150,34 @@ private:
 
                if (forceUpdate || filterType != oldFilterType || parametricParams != oldParametricParams)
                {
-                   auto chainCoefficients = CoefficientMaker::makeCoefficients(parametricParams);
+                   parametricCoeffGen.changeParameters(parametricParams);
                    
-                   // push and pull Fifo for testing.
-                   bool temp0 = parametricCoeffFifo.push(chainCoefficients);
-                   jassert(temp0);
-                   
-                   // pull a copy
-                   ParametricCoeffPtr newChainCoefficients;
-                   bool temp = parametricCoeffFifo.pull(newChainCoefficients);
-                   jassert(temp);
-                   
-
-                   
-                   leftChain.setBypassed<filterNum>(bypassed);
-                   rightChain.setBypassed<filterNum>(bypassed);
-                   *(leftChain.get<filterNum>().coefficients) = *newChainCoefficients;
-                   *(rightChain.get<filterNum>().coefficients) = *newChainCoefficients;
-                   
-                   // TEMPORARY To avoid releasing resources in audio thread, i increment the
-                   // reference count. But that means these will never get released for now.
-                   newChainCoefficients.get()->incReferenceCount();
-         
                }
+               
+//                   auto chainCoefficients = CoefficientsMaker::makeCoefficients(parametricParams);
+//                   
+//                   // push and pull Fifo for testing.
+//                   bool temp0 = parametricCoeffFifo.push(chainCoefficients);
+//                   jassert(temp0);
+//                   
+                   // pull a copy
+             ParametricCoeffPtr newChainCoefficients;
+             bool newChainAvailable = parametricCoeffFifo.pull(newChainCoefficients);
+//             bool temp = parametricCoeffFifo.pull(newChainCoefficients);
+//             jassert(temp);
+               
+             if ( newChainAvailable )
+             {
+                 leftChain.setBypassed<filterNum>(bypassed);
+                 rightChain.setBypassed<filterNum>(bypassed);
+                 *(leftChain.get<filterNum>().coefficients) = *newChainCoefficients;
+                 *(rightChain.get<filterNum>().coefficients) = *newChainCoefficients;
+                 
+                 // TEMPORARY To avoid releasing resources in audio thread, i increment the
+                 // reference count. But that means these will never get released for now.
+                 newChainCoefficients.get()->incReferenceCount();
+                 
+             }
                
                oldParametricParams = parametricParams;
                oldFilterType = filterType;
@@ -168,7 +186,7 @@ private:
        
        template <const int filterNum>
        void updateCutFilter(double sampleRate, bool forceUpdate, HighCutLowCutParameters& oldParams, bool isLowCut)
-       {
+    {
            using namespace FilterInfo;
            
            float frequency = apvts.getRawParameterValue(generateFreqParamString(filterNum))->load();
@@ -177,7 +195,7 @@ private:
            Slope slope = static_cast<Slope> (apvts.getRawParameterValue(generateSlopeParamString(filterNum))->load());
            
            HighCutLowCutParameters cutParams;
-               
+           
            cutParams.isLowcut = isLowCut;
            cutParams.frequency = frequency;
            cutParams.bypassed = bypassed;
@@ -185,55 +203,99 @@ private:
            cutParams.sampleRate = sampleRate;
            cutParams.quality  = 1.0f; //not used for cut filters
            
-          
+           
            
            if (forceUpdate || oldParams != cutParams)
            {
-               auto chainCoefficients = CoefficientMaker::makeCoefficients(cutParams);
+               auto chainCoefficients = CoefficientsMaker::makeCoefficients(cutParams);
                decltype(chainCoefficients) newChainCoefficients;
                
                if(isLowCut)
                {
-                   lowCutCoeffFifo.push(chainCoefficients);
-                   lowCutCoeffFifo.pull(newChainCoefficients);
+                   //                   lowCutCoeffFifo.push(chainCoefficients);
+                   //                   lowCutCoeffFifo.pull(newChainCoefficients);
+                   lowCutCoeffGen.changeParameters(cutParams);
                }
                else
                {
-                   highCutCoeffFifo.push(chainCoefficients);
-                   highCutCoeffFifo.pull(newChainCoefficients);
+                   //                   highCutCoeffFifo.push(chainCoefficients);
+                   //                   highCutCoeffFifo.pull(newChainCoefficients);
+                   highCutCoeffGen.changeParameters(cutParams);
                }
+           }
            
+           
+           CutCoeffArray newChainCoefficients;
+           bool newChainAvailable;
+           
+           if(isLowCut)
+           {
+               newChainAvailable = lowCutCoeffFifo.pull(newChainCoefficients);
+           }
+           else
+           {
+               newChainAvailable = highCutCoeffFifo.pull(newChainCoefficients);
+           }
+           
+           if (newChainAvailable)
+           {
                leftChain.setBypassed<filterNum>(bypassed);
                rightChain.setBypassed<filterNum>(bypassed);
                bypassSubChain<filterNum>();
                //set up the four filters
                if(!bypassed)
                {
-                   /*not sure I understand this fully. See SimpleEQ Part 7 at 10 min point for simple version
-                   which is then refactored at 5min point in Part 8*/
-                   switch(slope)
+                   int order {newChainCoefficients.size()};
+                   switch(order)
                    {
-                       case Slope::Slope_48:
-                       case Slope::Slope_42:
+                       case 4:
                            updateSingleCut<filterNum,3> (newChainCoefficients);
-                           
-                       case Slope::Slope_36:
-                       case Slope::Slope_30:
+                       case 3:
                            updateSingleCut<filterNum,2> (newChainCoefficients);
-                           
-                       case Slope::Slope_24:
-                       case Slope::Slope_18:
+                       case 2:
                            updateSingleCut<filterNum,1> (newChainCoefficients);
-                  
-                       case Slope::Slope_12:
-                       case Slope::Slope_6:
+                       case 1:
                            updateSingleCut<filterNum,0> (newChainCoefficients);
-
-                      }
+                   }
                }
            }
            oldParams = cutParams;
        }
+                   
+                  
+           
+           
+//               leftChain.setBypassed<filterNum>(bypassed);
+//               rightChain.setBypassed<filterNum>(bypassed);
+//               bypassSubChain<filterNum>();
+//               //set up the four filters
+//               if(!bypassed)
+//               {
+//                   /*not sure I understand this fully. See SimpleEQ Part 7 at 10 min point for simple version
+//                   which is then refactored at 5min point in Part 8*/
+//                   switch(slope)
+//                   {
+//                       case Slope::Slope_48:
+//                       case Slope::Slope_42:
+//                           updateSingleCut<filterNum,3> (newChainCoefficients);
+//                           
+//                       case Slope::Slope_36:
+//                       case Slope::Slope_30:
+//                           updateSingleCut<filterNum,2> (newChainCoefficients);
+//                           
+//                       case Slope::Slope_24:
+//                       case Slope::Slope_18:
+//                           updateSingleCut<filterNum,1> (newChainCoefficients);
+//                  
+//                       case Slope::Slope_12:
+//                       case Slope::Slope_6:
+//                           updateSingleCut<filterNum,0> (newChainCoefficients);
+//
+//                      }
+//               }
+//           }
+//           oldParams = cutParams;
+//       }
        
        template <const int filterNum, const int subFilterNum, typename CoefficientType>
        void updateSingleCut(CoefficientType& chainCoefficients)
@@ -279,14 +341,23 @@ private:
     HighCutLowCutParameters oldHighCutParams;
     HighCutLowCutParameters oldLowCutParams;
     
-    using ParametricCoeffPtr = decltype(CoefficientMaker::makeCoefficients (oldParametricParams));
-    using CutCoeffArray = decltype(CoefficientMaker::makeCoefficients (oldLowCutParams));
+//    using ParametricCoeffPtr = decltype(CoefficientsMaker::makeCoefficients (oldParametricParams));
+//    using CutCoeffArray = decltype(CoefficientsMaker::makeCoefficients (oldLowCutParams));
 
-    Fifo <ParametricCoeffPtr,10>  parametricCoeffFifo;
-    Fifo <CutCoeffArray,10>  cutCoeffFifo;
+    Fifo <ParametricCoeffPtr,100>  parametricCoeffFifo;
+    Fifo <CutCoeffArray,100>  cutCoeffFifo;
     
-    Fifo <CutCoeffArray,10>  lowCutCoeffFifo;
-    Fifo <CutCoeffArray,10>  highCutCoeffFifo;
+    Fifo <CutCoeffArray,100>  lowCutCoeffFifo;
+    Fifo <CutCoeffArray,100>  highCutCoeffFifo;
+    
+    FilterCoefficientGenerator<CutCoeffArray, HighCutLowCutParameters, CoefficientsMaker, 100> highCutCoeffGen {highCutCoeffFifo};
+    FilterCoefficientGenerator<CutCoeffArray, HighCutLowCutParameters, CoefficientsMaker, 100> lowCutCoeffGen {lowCutCoeffFifo};
+    FilterCoefficientGenerator<CutCoeffArray, HighCutLowCutParameters, CoefficientsMaker, 100> cutCoeffGen {cutCoeffFifo};
+    FilterCoefficientGenerator<ParametricCoeffPtr, FilterParameters, CoefficientsMaker, 100> parametricCoeffGen {parametricCoeffFifo};
+    
+   
+    
+
     
     
     

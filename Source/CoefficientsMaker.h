@@ -16,7 +16,7 @@
  https://docs.juce.com/master/structdsp_1_1IIR_1_1Coefficients.html
  */
 
-struct CoefficientMaker
+struct CoefficientsMaker
 {
     
     static auto makeCoefficients(FilterInfo::FilterType filterType,
@@ -76,3 +76,11 @@ struct CoefficientMaker
     
     
 };
+
+
+ //convenience types
+
+using ParametricCoeffPtr = decltype(CoefficientsMaker::makeCoefficients (FilterParameters()));
+using CutCoeffArray = decltype(CoefficientsMaker::makeCoefficients (HighCutLowCutParameters()));
+
+
