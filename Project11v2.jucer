@@ -4,6 +4,7 @@
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1">
   <MAINGROUP id="BckxKw" name="Project11v2">
     <GROUP id="{9814709B-2041-D145-8BD5-23809E81AABF}" name="Source">
+      <FILE id="Iu73NT" name="ReleasePool.h" compile="0" resource="0" file="Source/ReleasePool.h"/>
       <FILE id="dEVhAc" name="FilterCoefficientGenerator.h" compile="0" resource="0"
             file="Source/FilterCoefficientGenerator.h"/>
       <FILE id="QHp2YE" name="Fifo.h" compile="0" resource="0" file="Source/Fifo.h"/>

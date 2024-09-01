@@ -133,7 +133,8 @@ private:
                    *(leftChain.get<filterNum>().coefficients) = *(newChainCoefficients[0]);
                    *(rightChain.get<filterNum>().coefficients) = *(newChainCoefficients[0]);
                }
-   
+               
+               oldCutParams = cutParams;
            }
            else
            {
@@ -207,8 +208,8 @@ private:
            
            if (forceUpdate || oldParams != cutParams)
            {
-               auto chainCoefficients = CoefficientsMaker::makeCoefficients(cutParams);
-               decltype(chainCoefficients) newChainCoefficients;
+//               auto chainCoefficients = CoefficientsMaker::makeCoefficients(cutParams);
+//               decltype(chainCoefficients) newChainCoefficients;
                
                if(isLowCut)
                {
