@@ -17,6 +17,7 @@
 #include "CoefficientsMaker.h"
 #include "Fifo.h"
 #include "FilterCoefficientGenerator.h"
+#include "ReleasePool.h"
 
 
 using Filter = juce::dsp::IIR::Filter<float>;
@@ -132,6 +133,8 @@ private:
                    
                    *(leftChain.get<filterNum>().coefficients) = *(newChainCoefficients[0]);
                    *(rightChain.get<filterNum>().coefficients) = *(newChainCoefficients[0]);
+                   
+                   parametricCoeffPool.add(newChainCoefficients[0]);
                }
                
                oldCutParams = cutParams;
@@ -162,7 +165,7 @@ private:
 //                   jassert(temp0);
 //                   
                    // pull a copy
-             ParametricCoeffPtr newChainCoefficients;
+             FilterCoeffPtr newChainCoefficients;
              bool newChainAvailable = parametricCoeffFifo.pull(newChainCoefficients);
 //             bool temp = parametricCoeffFifo.pull(newChainCoefficients);
 //             jassert(temp);
@@ -174,9 +177,11 @@ private:
                  *(leftChain.get<filterNum>().coefficients) = *newChainCoefficients;
                  *(rightChain.get<filterNum>().coefficients) = *newChainCoefficients;
                  
+                 parametricCoeffPool.add(newChainCoefficients);
+                 
                  // TEMPORARY To avoid releasing resources in audio thread, i increment the
                  // reference count. But that means these will never get released for now.
-                 newChainCoefficients.get()->incReferenceCount();
+//                 newChainCoefficients.get()->incReferenceCount();
                  
              }
                
@@ -250,13 +255,13 @@ private:
                    switch(order)
                    {
                        case 4:
-                           updateSingleCut<filterNum,3> (newChainCoefficients);
+                           updateSingleCut<filterNum,3> (newChainCoefficients, isLowCut);
                        case 3:
-                           updateSingleCut<filterNum,2> (newChainCoefficients);
+                           updateSingleCut<filterNum,2> (newChainCoefficients, isLowCut);
                        case 2:
-                           updateSingleCut<filterNum,1> (newChainCoefficients);
+                           updateSingleCut<filterNum,1> (newChainCoefficients, isLowCut);
                        case 1:
-                           updateSingleCut<filterNum,0> (newChainCoefficients);
+                           updateSingleCut<filterNum,0> (newChainCoefficients, isLowCut);
                    }
                }
            }
@@ -299,20 +304,43 @@ private:
 //       }
        
        template <const int filterNum, const int subFilterNum, typename CoefficientType>
-       void updateSingleCut(CoefficientType& chainCoefficients)
-       {
-           auto& leftSubChain = leftChain.template get<filterNum>();
-           auto& rightSubChain = rightChain.template get<filterNum>();
-           
-           
-           
-           *(leftSubChain.template get<subFilterNum>().coefficients) = *(chainCoefficients[subFilterNum]);
-           *(rightSubChain.template get<subFilterNum>().coefficients) = *(chainCoefficients[subFilterNum]);
-           
-           leftSubChain.template setBypassed<subFilterNum>(false);
-           rightSubChain.template setBypassed<subFilterNum>(false);
-           
-       }
+       void updateSingleCut(CoefficientType& chainCoefficients, bool isLowCut)
+        {
+            auto& leftSubChain = leftChain.template get<filterNum>();
+            auto& rightSubChain = rightChain.template get<filterNum>();
+            
+            
+            
+            *(leftSubChain.template get<subFilterNum>().coefficients) = *(chainCoefficients[subFilterNum]);
+            *(rightSubChain.template get<subFilterNum>().coefficients) = *(chainCoefficients[subFilterNum]);
+            
+            // add to correct release pool
+            if(isLowCut)
+            {
+                lowCutCoeffPool.add(chainCoefficients[subFilterNum]);
+            }
+            else
+            {
+                highCutCoeffPool.add(chainCoefficients[subFilterNum]);
+            }
+            
+            leftSubChain.template setBypassed<subFilterNum>(false);
+            rightSubChain.template setBypassed<subFilterNum>(false);
+                
+            }
+//       {
+//           auto& leftSubChain = leftChain.template get<filterNum>();
+//           auto& rightSubChain = rightChain.template get<filterNum>();
+//           
+//           
+//           
+//           *(leftSubChain.template get<subFilterNum>().coefficients) = *(chainCoefficients[subFilterNum]);
+//           *(rightSubChain.template get<subFilterNum>().coefficients) = *(chainCoefficients[subFilterNum]);
+//           
+//           leftSubChain.template setBypassed<subFilterNum>(false);
+//           rightSubChain.template setBypassed<subFilterNum>(false);
+//           
+//       }
        
        template <const int filterNum>
        void bypassSubChain()
@@ -344,8 +372,13 @@ private:
     
 //    using ParametricCoeffPtr = decltype(CoefficientsMaker::makeCoefficients (oldParametricParams));
 //    using CutCoeffArray = decltype(CoefficientsMaker::makeCoefficients (oldLowCutParams));
+    
+    static const int fifoSize = 100;
+    // in testing i could fill the pool with enough fiddling with pool size =100, not so with 1000
+    static const int poolSize = 1000;
+    static const int cleanupInterval = 2000; // ms
 
-    Fifo <ParametricCoeffPtr,100>  parametricCoeffFifo;
+    Fifo <FilterCoeffPtr,100>  parametricCoeffFifo;
     Fifo <CutCoeffArray,100>  cutCoeffFifo;
     
     Fifo <CutCoeffArray,100>  lowCutCoeffFifo;
@@ -354,10 +387,15 @@ private:
     FilterCoefficientGenerator<CutCoeffArray, HighCutLowCutParameters, CoefficientsMaker, 100> highCutCoeffGen {highCutCoeffFifo};
     FilterCoefficientGenerator<CutCoeffArray, HighCutLowCutParameters, CoefficientsMaker, 100> lowCutCoeffGen {lowCutCoeffFifo};
     FilterCoefficientGenerator<CutCoeffArray, HighCutLowCutParameters, CoefficientsMaker, 100> cutCoeffGen {cutCoeffFifo};
-    FilterCoefficientGenerator<ParametricCoeffPtr, FilterParameters, CoefficientsMaker, 100> parametricCoeffGen {parametricCoeffFifo};
+    FilterCoefficientGenerator<FilterCoeffPtr, FilterParameters, CoefficientsMaker, 100> parametricCoeffGen {parametricCoeffFifo};
     
    
-    
+    // Release pools
+    //
+    using Coefficients = juce::dsp::IIR::Coefficients<float>;
+    ReleasePool<Coefficients, poolSize> lowCutCoeffPool {poolSize, cleanupInterval};
+    ReleasePool<Coefficients, poolSize> parametricCoeffPool {poolSize, cleanupInterval};
+    ReleasePool<Coefficients, poolSize> highCutCoeffPool {poolSize, cleanupInterval};
 
     
     
