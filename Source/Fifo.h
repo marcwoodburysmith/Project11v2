@@ -10,6 +10,7 @@
 
 #pragma once
 #include <JuceHeader.h>
+#include "CoeffTypeHelpers.h"
 
 template<typename T, size_t Size>
 struct Fifo

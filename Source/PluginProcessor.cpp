@@ -106,7 +106,8 @@ Project11v2AudioProcessor::~Project11v2AudioProcessor()
 void Project11v2AudioProcessor::updateFilters(double sampleRate, bool forceUpdate)
 {
     updateCutFilter<0>(sampleRate, forceUpdate, oldHighCutParams, true);
-    updateParametricFilter<1>(sampleRate, forceUpdate);
+//    updateParametricFilter<1>(sampleRate, forceUpdate);
+    updateParametricFilter<1>(sampleRate);
     updateCutFilter<2>(sampleRate, forceUpdate, oldLowCutParams, false);
 }
 

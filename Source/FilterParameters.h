@@ -10,12 +10,14 @@
 
 #pragma once
 #include <JuceHeader.h>
+#include "Decibel.h"
 
 
 struct FilterParameters : public FilterParametersBase
 {
     FilterInfo::FilterType filterType {FilterInfo::FilterType::LowPass};
-    float gain {0.0f};
+//    float gain {0.0f};
+    Decibel<float> gain {0.f};
     
 };
 

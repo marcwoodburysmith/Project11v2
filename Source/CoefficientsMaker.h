@@ -62,7 +62,9 @@ struct CoefficientsMaker
     
     static auto makeCoefficients(FilterParameters filterParams)
     {
-        return makeCoefficients(filterParams.filterType, filterParams.frequency, filterParams.quality, filterParams.gain, filterParams.sampleRate);
+//        return makeCoefficients(filterParams.filterType, filterParams.frequency, filterParams.quality, filterParams.gain, filterParams.sampleRate);
+        return makeCoefficients(filterParams.filterType, filterParams.frequency, filterParams.quality, filterParams.gain.getGain(), filterParams.sampleRate);
+        
     }
     
     static auto makeCoefficients(HighCutLowCutParameters filterParams)
