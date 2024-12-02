@@ -37,7 +37,7 @@ struct FilterLink
        
        // update sampleRate
 //       sampleRate = spec.sampleRate;
-        initialize(ParamType{}, 0.0, true, spec.sampleRate);
+        initialize(ParamType{}, 0.0, false, spec.sampleRate);
 
        
    }
@@ -120,7 +120,7 @@ struct FilterLink
            ParamType newParams {currentParams};
            // TODO update newParams using smoothed values for freq/gain/quality..
            // this will probably require some more type checking to see if it has a gain parameter or not.
-           coeffGen.add(newParams);
+           coeffGen.changeParameters(newParams);
            
        }
    }
@@ -128,20 +128,29 @@ struct FilterLink
     
     //stuff for configuring the filter before processing
 //    void performPreloopUpdate(const ParamType& params);
-    void performPreloopUpdate(const ParamType& params)
+    void performPreLoopUpdate(const ParamType& params)
     {
         updateParams(params);
         
     }
 
-    void performInnerLoopFilterUpdate(bool onRealTimeThread, int numSamplesToSkip);
+    void performInnerLoopFilterUpdate(bool onRealTimeThread, int numSamplesToSkip)
+    {
+        if(currentParams.bypassed)
+           return;
+       
+       generateNewCoefficientsIfNeeded();
+       loadCoefficients(onRealTimeThread);
+       // check smoothing, skip samples
+
+    }
 //    void initialize(const ParamType& params, float rampTime, bool onRealTimeThread, double sr);
     void initialize(const ParamType& params, float rampTime, bool onRealTimeThread, double sr)
     {
         currentParams = params;
         sampleRate = sr;
         shouldComputeNewCoefficients = true;
-        genearteNewCoefficientsIfNeeded();
+        generateNewCoefficientsIfNeeded();
         loadCoefficients(onRealTimeThread);
         
     }
