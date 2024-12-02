@@ -93,111 +93,6 @@ private:
            float frequency = apvts.getRawParameterValue(generateFreqParamString(filterNum))->load();
            float quality  = apvts.getRawParameterValue(generateQParamString(filterNum))->load();
            bool bypassed = apvts.getRawParameterValue(generateBypassParamString(filterNum))->load() > 0.5f;
-           
-//           
-//           
-//           if (filterType == FilterType::LowPass || filterType == FilterType::HighPass || filterType == FilterType::FirstOrderHighPass || filterType == FilterType::FirstOrderLowPass)
-//           {
-//               HighCutLowCutParameters cutParams;
-//               
-//               cutParams.isLowcut = (filterType == FilterType::HighPass) || (filterType == FilterType::FirstOrderHighPass);
-//               cutParams.frequency = frequency;
-//               cutParams.bypassed = bypassed;
-//               cutParams.order = 1;
-//               
-//               if (filterType == FilterType::HighPass || filterType == FilterType::LowPass)
-//                   cutParams.order = 2;
-//                   
-//               
-//               cutParams.sampleRate = sampleRate;
-//               cutParams.quality  = quality;
-//               
-//               // set up filter chains.
-//              
-//               if (forceUpdate || filterType != oldFilterType || cutParams != oldCutParams)
-//               {
-////                   auto chainCoefficients = CoefficientsMaker::makeCoefficients(cutParams);
-////                   
-////                   cutCoeffFifo.push(chainCoefficients);
-////                   decltype(chainCoefficients) newChainCoefficients;
-////                   cutCoeffFifo.pull(newChainCoefficients);
-////                   
-////                   leftChain.setBypassed<filterNum>(bypassed);
-////                   rightChain.setBypassed<filterNum>(bypassed);
-////                   
-////                   // Later this will be multiple filters for each of the bands i think.
-////                   *(leftChain.get<filterNum>().coefficients) = *(newChainCoefficients[0]);
-////                   *(rightChain.get<filterNum>().coefficients) = *(newChainCoefficients[0]);
-//                   cutCoeffGen.changeParameters(cutParams);
-//               }
-//           
-////               oldCutParams = cutParams;
-//               CutCoeffArray newChainCoefficients;
-//               bool newChainAvailable = cutCoeffFifo.pull(newChainCoefficients);
-//               
-//               if (newChainAvailable)
-//               {
-//                   leftChain.setBypassed<filterNum>(bypassed);
-//                   rightChain.setBypassed<filterNum>(bypassed);
-//                   
-//                   *(leftChain.get<filterNum>().coefficients) = *(newChainCoefficients[0]);
-//                   *(rightChain.get<filterNum>().coefficients) = *(newChainCoefficients[0]);
-//                   
-//                   parametricCoeffPool.add(newChainCoefficients[0]);
-//               }
-//               
-//               oldCutParams = cutParams;
-//           }
-//           else
-//           {
-//               FilterParameters parametricParams;
-//               
-//               parametricParams.frequency = frequency;
-//               parametricParams.filterType = filterType;
-//               parametricParams.sampleRate = sampleRate;
-//               parametricParams.quality = quality;
-//               parametricParams.bypassed = bypassed;
-////               parametricParams.gain = juce::Decibels::decibelsToGain(apvts.getRawParameterValue(generateGainParamString(filterNum))-> load());
-//               parametricParams.gain = Decibel<float> (apvts.getRawParameterValue(generateGainParamString(filterNum))-> load());
-//               
-//               // set up filter chains.
-//
-//               if (forceUpdate || filterType != oldFilterType || parametricParams != oldParametricParams)
-//               {
-//                   parametricCoeffGen.changeParameters(parametricParams);
-//                   
-//               }
-//               
-////                   auto chainCoefficients = CoefficientsMaker::makeCoefficients(parametricParams);
-////                   
-////                   // push and pull Fifo for testing.
-////                   bool temp0 = parametricCoeffFifo.push(chainCoefficients);
-////                   jassert(temp0);
-////                   
-//                   // pull a copy
-//             FilterCoeffPtr newChainCoefficients;
-//             bool newChainAvailable = parametricCoeffFifo.pull(newChainCoefficients);
-////             bool temp = parametricCoeffFifo.pull(newChainCoefficients);
-////             jassert(temp);
-//               
-//             if ( newChainAvailable )
-//             {
-//                 leftChain.setBypassed<filterNum>(bypassed);
-//                 rightChain.setBypassed<filterNum>(bypassed);
-//                 *(leftChain.get<filterNum>().coefficients) = *newChainCoefficients;
-//                 *(rightChain.get<filterNum>().coefficients) = *newChainCoefficients;
-//                 
-//                 parametricCoeffPool.add(newChainCoefficients);
-//                 
-//                 // TEMPORARY To avoid releasing resources in audio thread, i increment the
-//                 // reference count. But that means these will never get released for now.
-////                 newChainCoefficients.get()->incReferenceCount();
-//                 
-//             }
-//               
-//               oldParametricParams = parametricParams;
-//               oldFilterType = filterType;
-//           }
              
              FilterParameters parametricParams;
                      
@@ -213,25 +108,7 @@ private:
              leftChain.get<filterNum>().performInnerLoopFilterUpdate(true,0);
              rightChain.get<filterNum>().performPreLoopUpdate(parametricParams);
              rightChain.get<filterNum>().performInnerLoopFilterUpdate(true,0);
-                 
-                 
-         //        FilterCoeffPtr newChainCoefficients;
-         //        bool newChainAvailable = parametricCoeffFifo.pull(newChainCoefficients);
-         //
-         //        if (newChainAvailable)
-         //        {
-         //            leftChain.setBypassed<filterNum>(bypassed);
-         //            rightChain.setBypassed<filterNum>(bypassed);
-         //            *(leftChain.get<filterNum>().coefficients) = *newChainCoefficients;
-         //            *(rightChain.get<filterNum>().coefficients) = *newChainCoefficients;
-         //
-         //            // prevent in thread deletion
-         //            parametricCoeffPool.add(newChainCoefficients);
-         //        }
-         //
-         //        oldParametricParams = parametricParams;
-         //        oldFilterType = filterType;
-                     
+            
 
        }
        

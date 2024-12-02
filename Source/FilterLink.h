@@ -37,7 +37,7 @@ struct FilterLink
        
        // update sampleRate
 //       sampleRate = spec.sampleRate;
-        initialize(ParamType{}, 0.0, false, spec.sampleRate);
+//        initialize(ParamType{}, 0.0, false, spec.sampleRate);
 
        
    }
