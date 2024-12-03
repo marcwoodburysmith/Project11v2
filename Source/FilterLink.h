@@ -160,7 +160,9 @@ private:
     //stuff for setting the coefficients of the FilterType instance.
 //    updateFilterState(Ptr& oldState, Ptr newState);
 //    void configureCutFilterChain(const FifoDataType& coefficients);
-    void updateFilterState(FifoDataType& oldState, FifoDataType newState)
+//    void updateFilterState(FifoDataType& oldState, FifoDataType newState)
+    void updateFilterState(FilterCoeffPtr& oldState, FilterCoeffPtr newState)
+
     {
         *oldState = *newState;
         releasePool.add(newState);

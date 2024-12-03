@@ -8,9 +8,14 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
-#include "ReleasePool.h"
 
 
+#include "ParameterHelpers.h"
+#include "FilterInfo.h"
+#include "FilterParameters.h"
+#include "HighCutLowCutParameters.h"
+
+#include <string>
 
 //==============================================================================
 
@@ -103,12 +108,50 @@ Project11v2AudioProcessor::~Project11v2AudioProcessor()
 //    
 //}
 
-void Project11v2AudioProcessor::updateFilters(double sampleRate, bool forceUpdate)
+void Project11v2AudioProcessor::updateFilters(double sampleRate)
 {
-    updateCutFilter<0>(sampleRate, forceUpdate, oldHighCutParams, true);
-//    updateParametricFilter<1>(sampleRate, forceUpdate);
-    updateParametricFilter<1>(sampleRate);
-    updateCutFilter<2>(sampleRate, forceUpdate, oldLowCutParams, false);
+   updateCutFilter<0>(sampleRate, true);
+   updateParametricFilter<1>(sampleRate);
+   updateCutFilter<2>(sampleRate, false);
+}
+
+//==============================================================================
+
+void Project11v2AudioProcessor::initializeFilters(double sampleRate)
+{
+    // initialize filters first.
+//        FilterParameters paramatricParams = getParametericFilterParams<1>(sampleRate);
+//        leftChain.get<1>().initialize(paramatricParams, 0.0, false, sampleRate);
+//        rightChain.get<1>().initialize(paramatricParams, 0.0, false, sampleRate);
+//        
+//        //low cut filter, and then high cut
+//        HighCutLowCutParameters lowCutParams = getCutFilterParams<0>(sampleRate, true);
+//        HighCutLowCutParameters highCutParams = getCutFilterParams<2>(sampleRate, true);
+//        leftChain.get<0>().initialize(lowCutParams, 0.0, false, sampleRate);
+//        rightChain.get<0>().initialize(lowCutParams, 0.0, false, sampleRate);
+//        leftChain.get<2>().initialize(highCutParams, 0.0, false, sampleRate);
+//        rightChain.get<2>().initialize(highCutParams, 0.0, false, sampleRate);
+    
+    // check if on realtime thread
+        auto messMan = juce::MessageManager::getInstanceWithoutCreating();
+        bool onRealTimeThread=  ! ((messMan != nullptr) && messMan->isThisTheMessageThread());
+        
+        // initialize filters first.
+        FilterParameters paramatricParams = getParametericFilterParams<1>(sampleRate);
+        leftChain.get<1>().initialize(paramatricParams, 0.0, onRealTimeThread, sampleRate);
+        rightChain.get<1>().initialize(paramatricParams, 0.0, onRealTimeThread, sampleRate);
+        
+        //low cut filter, and then high cut
+        HighCutLowCutParameters lowCutParams = getCutFilterParams<0>(sampleRate, true);
+        HighCutLowCutParameters highCutParams = getCutFilterParams<2>(sampleRate, false);
+        leftChain.get<0>().initialize(lowCutParams, 0.0, onRealTimeThread, sampleRate);
+        rightChain.get<0>().initialize(lowCutParams, 0.0, onRealTimeThread, sampleRate);
+        leftChain.get<2>().initialize(highCutParams, 0.0, onRealTimeThread, sampleRate);
+        rightChain.get<2>().initialize(highCutParams, 0.0, onRealTimeThread, sampleRate);
+    
+    
+    
+
 }
 
 
@@ -253,7 +296,16 @@ void Project11v2AudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     leftChain.prepare(spec);
     rightChain.prepare(spec);
     
-    updateFilters(sampleRate,true);
+// initialize filters first.
+//   FilterParameters paramatricParams = getParametericFilterParams<1>(sampleRate);
+//   leftChain.get<1>().initialize(paramatricParams, 0.0, false, sampleRate);
+//   
+//   //TODO replace these with initialize stuff.
+//   updateCutFilter<0>(sampleRate, true, oldHighCutParams, true);
+//   updateCutFilter<2>(sampleRate, true, oldLowCutParams, false);
+    initializeFilters(sampleRate);
+    
+//    updateFilters(sampleRate,true);
 }
 
 void Project11v2AudioProcessor::releaseResources()
@@ -343,12 +395,22 @@ void Project11v2AudioProcessor::getStateInformation (juce::MemoryBlock& destData
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
+    auto state = apvts.copyState();
+    std::unique_ptr<juce::XmlElement> xml (state.createXml());
+    copyXmlToBinary (*xml, destData);
+
 }
 
 void Project11v2AudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
+    std::unique_ptr<juce::XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
+    if (xmlState.get() != nullptr)
+            if (xmlState->hasTagName (apvts.state.getType()))
+                    apvts.replaceState (juce::ValueTree::fromXml (*xmlState));
+    initializeFilters(getSampleRate());
+
 }
 
 //==============================================================================
