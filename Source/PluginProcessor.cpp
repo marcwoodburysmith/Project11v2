@@ -110,47 +110,45 @@ Project11v2AudioProcessor::~Project11v2AudioProcessor()
 
 void Project11v2AudioProcessor::updateFilters(double sampleRate)
 {
-   updateCutFilter<0>(sampleRate, true);
-   updateParametricFilter<1>(sampleRate);
-   updateCutFilter<2>(sampleRate, false);
+//   updateCutFilter<0>(sampleRate, true);
+//   updateParametricFilter<1>(sampleRate);
+//   updateCutFilter<2>(sampleRate, false);
+    updateCutFilter<0>(sampleRate, true);
+    updateParametricFilter<1>(sampleRate);
+    updateParametricFilter<2>(sampleRate);
+    updateParametricFilter<3>(sampleRate);
+    updateParametricFilter<4>(sampleRate);
+    updateParametricFilter<5>(sampleRate);
+    updateParametricFilter<6>(sampleRate);
+    updateCutFilter<7>(sampleRate, false);
+
 }
 
 //==============================================================================
 
 void Project11v2AudioProcessor::initializeFilters(double sampleRate)
 {
-    // initialize filters first.
-//        FilterParameters paramatricParams = getParametericFilterParams<1>(sampleRate);
-//        leftChain.get<1>().initialize(paramatricParams, 0.0, false, sampleRate);
-//        rightChain.get<1>().initialize(paramatricParams, 0.0, false, sampleRate);
-//        
-//        //low cut filter, and then high cut
-//        HighCutLowCutParameters lowCutParams = getCutFilterParams<0>(sampleRate, true);
-//        HighCutLowCutParameters highCutParams = getCutFilterParams<2>(sampleRate, true);
-//        leftChain.get<0>().initialize(lowCutParams, 0.0, false, sampleRate);
-//        rightChain.get<0>().initialize(lowCutParams, 0.0, false, sampleRate);
-//        leftChain.get<2>().initialize(highCutParams, 0.0, false, sampleRate);
-//        rightChain.get<2>().initialize(highCutParams, 0.0, false, sampleRate);
     
     // check if on realtime thread
         auto messMan = juce::MessageManager::getInstanceWithoutCreating();
         bool onRealTimeThread=  ! ((messMan != nullptr) && messMan->isThisTheMessageThread());
         
-        // initialize filters first.
-        FilterParameters paramatricParams = getParametericFilterParams<1>(sampleRate);
-        leftChain.get<1>().initialize(paramatricParams, 0.0, onRealTimeThread, sampleRate);
-        rightChain.get<1>().initialize(paramatricParams, 0.0, onRealTimeThread, sampleRate);
-        
-        //low cut filter, and then high cut
-        HighCutLowCutParameters lowCutParams = getCutFilterParams<0>(sampleRate, true);
-        HighCutLowCutParameters highCutParams = getCutFilterParams<2>(sampleRate, false);
-        leftChain.get<0>().initialize(lowCutParams, 0.0, onRealTimeThread, sampleRate);
-        rightChain.get<0>().initialize(lowCutParams, 0.0, onRealTimeThread, sampleRate);
-        leftChain.get<2>().initialize(highCutParams, 0.0, onRealTimeThread, sampleRate);
-        rightChain.get<2>().initialize(highCutParams, 0.0, onRealTimeThread, sampleRate);
-    
-    
-    
+    // initialize filters
+      
+       initializeChain<1>(getParametericFilterParams<1>(sampleRate),onRealTimeThread,sampleRate);
+       initializeChain<2>(getParametericFilterParams<2>(sampleRate),onRealTimeThread,sampleRate);
+       initializeChain<3>(getParametericFilterParams<3>(sampleRate),onRealTimeThread,sampleRate);
+       initializeChain<4>(getParametericFilterParams<4>(sampleRate),onRealTimeThread,sampleRate);
+       initializeChain<5>(getParametericFilterParams<5>(sampleRate),onRealTimeThread,sampleRate);
+       initializeChain<6>(getParametericFilterParams<6>(sampleRate),onRealTimeThread,sampleRate);
+       
+       
+       //low cut filter, and then high cut
+       HighCutLowCutParameters lowCutParams = getCutFilterParams<0>(sampleRate, true);
+       initializeChain<0>(lowCutParams,onRealTimeThread,sampleRate);
+       HighCutLowCutParameters highCutParams = getCutFilterParams<7>(sampleRate, false);
+       initializeChain<7>(highCutParams,onRealTimeThread,sampleRate);
+
 
 }
 
@@ -211,9 +209,17 @@ juce::AudioProcessorValueTreeState::ParameterLayout Project11v2AudioProcessor::c
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
+//    addFilterParamToLayout(layout, 0, true);
+//    addFilterParamToLayout(layout, 1, false);
+//    addFilterParamToLayout(layout, 2, true);
     addFilterParamToLayout(layout, 0, true);
     addFilterParamToLayout(layout, 1, false);
-    addFilterParamToLayout(layout, 2, true);
+    addFilterParamToLayout(layout, 2, false);
+    addFilterParamToLayout(layout, 3, false);
+    addFilterParamToLayout(layout, 4, false);
+    addFilterParamToLayout(layout, 5, false);
+    addFilterParamToLayout(layout, 6, false);
+    addFilterParamToLayout(layout, 7, true);
     
     return layout;
 }

@@ -34,7 +34,16 @@ using CutChain = juce::dsp::ProcessorChain<Filter,Filter,Filter,Filter>;
 using CutFilter = FilterLink<CutChain, CutCoeffArray, HighCutLowCutParameters, CoefficientsMaker>;
 using ParametricFilter = FilterLink<Filter, FilterCoeffPtr, FilterParameters, CoefficientsMaker>;
  
-using MonoChain = juce::dsp::ProcessorChain<CutFilter,ParametricFilter,CutFilter>;
+//using MonoChain = juce::dsp::ProcessorChain<CutFilter,ParametricFilter,CutFilter>;
+using MonoChain = juce::dsp::ProcessorChain<CutFilter,
+                                            ParametricFilter,
+                                            ParametricFilter,
+                                            ParametricFilter,
+                                            ParametricFilter,
+                                            ParametricFilter,
+                                            ParametricFilter,
+                                            CutFilter>;
+
 
 
 //==============================================================================
@@ -111,12 +120,7 @@ private:
       parametricParams.gain = Decibel <float> (apvts.getRawParameterValue(generateGainParamString(filterNum))-> load());
  
       return parametricParams;
-            
-//             leftChain.get<filterNum>().performPreLoopUpdate(parametricParams);
-//             leftChain.get<filterNum>().performInnerLoopFilterUpdate(true,0);
-//             rightChain.get<filterNum>().performPreLoopUpdate(parametricParams);
-//             rightChain.get<filterNum>().performInnerLoopFilterUpdate(true,0);
-            
+                        
 
        }
     
@@ -172,50 +176,16 @@ private:
            rightChain.get<filterNum>().performInnerLoopFilterUpdate(true,0);
            
        }
-       
+    
+    template <const int filterNum, typename ParamType>
+        void initializeChain(ParamType params, bool onRealTimeThread, double sampleRate)
+        {
+            leftChain.get<filterNum>().initialize(params, 0.0, onRealTimeThread, sampleRate);
+            rightChain.get<filterNum>().initialize(params, 0.0, onRealTimeThread, sampleRate);
+        }
 
        
-//       template <const int filterNum, const int subFilterNum, typename CoefficientType>
-//       void updateSingleCut(CoefficientType& chainCoefficients, bool isLowCut)
-//        {
-//            auto& leftSubChain = leftChain.template get<filterNum>();
-//            auto& rightSubChain = rightChain.template get<filterNum>();
-//            
-//            
-//            
-//            *(leftSubChain.template get<subFilterNum>().coefficients) = *(chainCoefficients[subFilterNum]);
-//            *(rightSubChain.template get<subFilterNum>().coefficients) = *(chainCoefficients[subFilterNum]);
-//            
-//            // add to correct release pool
-//            if(isLowCut)
-//            {
-//                lowCutCoeffPool.add(chainCoefficients[subFilterNum]);
-//            }
-//            else
-//            {
-//                highCutCoeffPool.add(chainCoefficients[subFilterNum]);
-//            }
-//            
-//            leftSubChain.template setBypassed<subFilterNum>(false);
-//            rightSubChain.template setBypassed<subFilterNum>(false);
-//                
-//            }
-//       
-//       template <const int filterNum>
-//       void bypassSubChain()
-//       {
-//           auto& leftSubChain = leftChain.template get<filterNum>();
-//           auto& rightSubChain = rightChain.template get<filterNum>();
-//           leftSubChain.template setBypassed<0>(true);
-//           leftSubChain.template setBypassed<1>(true);
-//           leftSubChain.template setBypassed<2>(true);
-//           leftSubChain.template setBypassed<3>(true);
-//           rightSubChain.template setBypassed<0>(true);
-//           rightSubChain.template setBypassed<1>(true);
-//           rightSubChain.template setBypassed<2>(true);
-//           rightSubChain.template setBypassed<3>(true);
-//       }
-//    
+
     
     void initializeFilters(double sampleRate);
 //    void updateFilters(double sampleRate, bool forceUpdate = false);
@@ -225,47 +195,7 @@ private:
     
     
     
-//    FilterParameters oldParametricParams;
-//    HighCutLowCutParameters oldCutParams;
-//    FilterInfo::FilterType oldFilterType;
-//    
-//    HighCutLowCutParameters oldHighCutParams;
-//    HighCutLowCutParameters oldLowCutParams;
-    
 
-    
-//    static const int fifoSize = 100;
-//    // in testing i could fill the pool with enough fiddling with pool size =100, not so with 1000
-//    static const int poolSize = 1000;
-//    static const int cleanupInterval = 2000; // ms
-//
-////    Fifo <FilterCoeffPtr,100>  parametricCoeffFifo;
-//    //Fifo <FilterCoeffPtr, fifoSize>  parametricCoeffFifo;
-//    Fifo <CutCoeffArray,fifoSize>  cutCoeffFifo;
-//    
-//    Fifo <CutCoeffArray,fifoSize>  lowCutCoeffFifo;
-//    Fifo <CutCoeffArray,fifoSize>  highCutCoeffFifo;
-//    
-//    FilterCoefficientGenerator<CutCoeffArray, HighCutLowCutParameters, CoefficientsMaker, 100> highCutCoeffGen {highCutCoeffFifo};
-//    FilterCoefficientGenerator<CutCoeffArray, HighCutLowCutParameters, CoefficientsMaker, 100> lowCutCoeffGen {lowCutCoeffFifo};
-//    FilterCoefficientGenerator<CutCoeffArray, HighCutLowCutParameters, CoefficientsMaker, 100> cutCoeffGen {cutCoeffFifo};
-////    FilterCoefficientGenerator<FilterCoeffPtr, FilterParameters, CoefficientsMaker, 100> parametricCoeffGen {parametricCoeffFifo};
-//    //FilterCoefficientGenerator<FilterCoeffPtr, FilterParameters, CoefficientsMaker, fifoSize> parametricCoeffGen {parametricCoeffFifo};
-//    
-//   
-//    // Release pools
-//    //
-//    using Coefficients = juce::dsp::IIR::Coefficients<float>;
-//    ReleasePool<Coefficients, poolSize> lowCutCoeffPool {poolSize, cleanupInterval};
-////    ReleasePool<Coefficients, poolSize> parametricCoeffPool {poolSize, cleanupInterval};
-//    //ReleasePool<Coefficients, poolSize> parametricCoeffPool {poolSize, cleanupInterval};
-//    ReleasePool<Coefficients, poolSize> highCutCoeffPool {poolSize, cleanupInterval};
-//    
-////    FilterLink<Filter, FilterCoeffPtr, FilterParameters, CoefficientsMaker> paraFilterLink;
-//
-//
-//    
-    
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Project11v2AudioProcessor)
