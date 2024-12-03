@@ -161,12 +161,21 @@ private:
 //    updateFilterState(Ptr& oldState, Ptr newState);
 //    void configureCutFilterChain(const FifoDataType& coefficients);
 //    void updateFilterState(FifoDataType& oldState, FifoDataType newState)
-    void updateFilterState(FilterCoeffPtr& oldState, FilterCoeffPtr newState)
-
+    
+//    void updateFilterState(FilterCoeffPtr& oldState, FilterCoeffPtr newState)
+//
+//    {
+//        *oldState = *newState;
+//        releasePool.add(newState);
+//    }
+    
+    template <typename Obj>
+    void updateFilterState(juce::ReferenceCountedObjectPtr<Obj>& oldState ,juce::ReferenceCountedObjectPtr<Obj> newState)
     {
         *oldState = *newState;
         releasePool.add(newState);
     }
+
     
     void configureCutFilterChain(const FifoDataType& coefficients)
     {

@@ -19,9 +19,10 @@ public:
     {
     }
     
-    explicit Decibel(FloatType dB) : decibels{dB}
+    Decibel(FloatType dB) : decibels{dB}
     {
     }
+    
     
     FloatType getDb() const
     {
@@ -55,6 +56,18 @@ public:
         return *this;
     }
     
+    Decibel& operator*=(const Decibel& rhs)
+    {
+        decibels *= rhs.decibels;
+        return *this;
+    }
+    
+    Decibel& operator/=(const Decibel& rhs)
+    {
+        decibels /= rhs.decibels;
+        return *this;
+    }
+    
     friend Decibel operator+(Decibel lhs, const Decibel& rhs)
     {
         lhs += rhs;
@@ -64,6 +77,18 @@ public:
     friend Decibel operator-(Decibel lhs, const Decibel& rhs)
     {
         lhs -= rhs;
+        return lhs;
+    }
+    
+    friend Decibel operator*(Decibel lhs, const Decibel& rhs)
+    {
+        lhs *= rhs;
+        return lhs;
+    }
+    
+    friend Decibel operator/(Decibel lhs, const Decibel& rhs)
+    {
+        lhs /= rhs;
         return lhs;
     }
     
