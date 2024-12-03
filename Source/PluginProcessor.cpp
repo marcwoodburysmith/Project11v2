@@ -108,20 +108,30 @@ Project11v2AudioProcessor::~Project11v2AudioProcessor()
 //    
 //}
 
-void Project11v2AudioProcessor::updateFilters(double sampleRate)
-{
-//   updateCutFilter<0>(sampleRate, true);
-//   updateParametricFilter<1>(sampleRate);
-//   updateCutFilter<2>(sampleRate, false);
-    updateCutFilter<0>(sampleRate, true);
-    updateParametricFilter<1>(sampleRate);
-    updateParametricFilter<2>(sampleRate);
-    updateParametricFilter<3>(sampleRate);
-    updateParametricFilter<4>(sampleRate);
-    updateParametricFilter<5>(sampleRate);
-    updateParametricFilter<6>(sampleRate);
-    updateCutFilter<7>(sampleRate, false);
 
+
+void Project11v2AudioProcessor::performPreLoopUpdate(double sampleRate)
+{
+    preUpdateCutFilter<0>(sampleRate, true);
+    preUpdateParametricFilter<1>(sampleRate);
+    preUpdateParametricFilter<2>(sampleRate);
+    preUpdateParametricFilter<3>(sampleRate);
+    preUpdateParametricFilter<4>(sampleRate);
+    preUpdateParametricFilter<5>(sampleRate);
+    preUpdateParametricFilter<6>(sampleRate);
+    preUpdateCutFilter<7>(sampleRate, false);
+}
+
+void Project11v2AudioProcessor::performInnerLoopUpdate(double sampleRate, int numSamplesToSkip)
+{
+    loopUpdateCutFilter<0>(sampleRate, true, numSamplesToSkip);
+    loopUpdateParametricFilter<1>(sampleRate, numSamplesToSkip);
+    loopUpdateParametricFilter<2>(sampleRate, numSamplesToSkip);
+    loopUpdateParametricFilter<3>(sampleRate, numSamplesToSkip);
+    loopUpdateParametricFilter<4>(sampleRate, numSamplesToSkip);
+    loopUpdateParametricFilter<5>(sampleRate, numSamplesToSkip);
+    loopUpdateParametricFilter<6>(sampleRate, numSamplesToSkip);
+    loopUpdateCutFilter<7>(sampleRate, false, numSamplesToSkip);
 }
 
 //==============================================================================
@@ -361,17 +371,41 @@ void Project11v2AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
     
-    updateFilters( getSampleRate() );
+//    updateFilters( getSampleRate() );
+    performPreLoopUpdate(getSampleRate());
+//    performInnerLoopUpdate(getSampleRate(), buffer.getNumSamples());
+
     
     juce::dsp::AudioBlock<float> block(buffer);
-    auto leftBlock = block.getSingleChannelBlock(0);
-    auto rightBlock = block.getSingleChannelBlock(1);
-     
     
-    juce::dsp::ProcessContextReplacing<float> leftContext(leftBlock);
-    juce::dsp::ProcessContextReplacing<float> rightContext(rightBlock);
-    leftChain.process(leftContext);
-    rightChain.process(rightContext);
+    int numSamples = buffer.getNumSamples();
+    int offset = 0;
+    
+    while(offset < numSamples)
+    {
+        int blockSize = std::min(numSamples - offset, innerLoopSize);
+        auto subBlock =  block.getSubBlock(offset, blockSize);
+        auto leftBlock = subBlock.getSingleChannelBlock(0);
+        auto rightBlock = subBlock.getSingleChannelBlock(1);
+        
+        performInnerLoopUpdate(getSampleRate(), blockSize);
+        juce::dsp::ProcessContextReplacing<float> leftContext(leftBlock);
+        juce::dsp::ProcessContextReplacing<float> rightContext(rightBlock);
+        leftChain.process(leftContext);
+        rightChain.process(rightContext);
+        offset += innerLoopSize;
+    }
+
+    
+    
+//    auto leftBlock = block.getSingleChannelBlock(0);
+//    auto rightBlock = block.getSingleChannelBlock(1);
+//     
+//    
+//    juce::dsp::ProcessContextReplacing<float> leftContext(leftBlock);
+//    juce::dsp::ProcessContextReplacing<float> rightContext(rightBlock);
+//    leftChain.process(leftContext);
+//    rightChain.process(rightContext);
 
     // test filter functions
 //    FilterParameters filterParams;  //use default values;

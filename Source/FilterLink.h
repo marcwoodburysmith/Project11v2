@@ -172,6 +172,13 @@ struct FilterLink
            ParamType newParams {currentParams};
            // TODO update newParams using smoothed values for freq/gain/quality..
            // this will probably require some more type checking to see if it has a gain parameter or not.
+           if(isSmoothing())
+           {
+              newParams.frequency = freqSmoother.getCurrentValue();
+              newParams.quality = qualitySmoother.getCurrentValue();
+              if constexpr(std::is_same<FilterParameters, ParamType>::value)
+                  newParams.gain = gainSmoother.getCurrentValue();
+           }
            coeffGen.changeParameters(newParams);
            
        }
@@ -264,7 +271,7 @@ private:
     
     // magic numebrs
     static const int fifoSize = 100;
-    static const int poolSize = 1000;
+    static const int poolSize = 5000;
     static const int cleanupInterval = 2000; // ms
 
     using Coefficients = juce::dsp::IIR::Coefficients<float>;
