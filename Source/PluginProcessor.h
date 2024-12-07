@@ -35,6 +35,8 @@ using CutChain = juce::dsp::ProcessorChain<Filter,Filter,Filter,Filter>;
 using CutFilter = FilterLink<CutChain, CutCoeffArray, HighCutLowCutParameters, CoefficientsMaker>;
 using ParametricFilter = FilterLink<Filter, FilterCoeffPtr, FilterParameters, CoefficientsMaker>;
 
+using ParamLayout = juce::AudioProcessorValueTreeState::ParameterLayout;
+
 //enum ChainPos {InputTrim, FilterChain, OutputTrim };
 
 const float rampTime = 0.05f;  //50 mseconds
@@ -110,30 +112,40 @@ public:
     juce::AudioProcessorValueTreeState apvts { *this, nullptr, "Parameters", createParameterLayout() };
     
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+    using ParamLayout = juce::AudioProcessorValueTreeState::ParameterLayout;
+
     
-    void addFilterParamToLayout(juce::AudioProcessorValueTreeState::ParameterLayout&, int, bool);
+//    void addFilterParamToLayout(juce::AudioProcessorValueTreeState::ParameterLayout&, int, bool);
+    void addFilterParamToLayout(ParamLayout&, Channel, int, bool);
+    void createFilterLayouts(ParamLayout& layout, Channel channel);
+
 
 private:
     template <const int filterNum>
-    FilterParameters getParametericFilterParams(double sampleRate)
+    FilterParameters getParametericFilterParams(Channel channel, double sampleRate)
     {
        using namespace FilterInfo;
          
-       FilterType filterType = static_cast<FilterType> (apvts.getRawParameterValue(generateTypeParamString(filterNum))->load());
+       
     
        
-       float frequency = apvts.getRawParameterValue(generateFreqParamString(filterNum))->load();
-       float quality  = apvts.getRawParameterValue(generateQParamString(filterNum))->load();
-       bool bypassed = apvts.getRawParameterValue(generateBypassParamString(filterNum))->load() > 0.5f;
+       float frequency = apvts.getRawParameterValue(generateFreqParamString(channel, filterNum))->load();
+       float quality  = apvts.getRawParameterValue(generateQParamString(channel, filterNum))->load();
+       bool bypassed = apvts.getRawParameterValue(generateBypassParamString(channel, filterNum))->load() > 0.5f;
+        
+//      FilterType filterType = static_cast<FilterType> (apvts.getRawParameterValue(generateTypeParamString(channel, filterNum))->load());
+        
+        FilterType filterType = static_cast<FilterType> (apvts.getRawParameterValue(generateTypeParamString(channel, filterNum))->load());
+
          
-       FilterParameters parametricParams;
+      FilterParameters parametricParams;
              
       parametricParams.frequency = frequency;
       parametricParams.filterType = filterType;
       parametricParams.sampleRate = sampleRate;
       parametricParams.quality = quality;
       parametricParams.bypassed = bypassed;
-      parametricParams.gain = Decibel <float> (apvts.getRawParameterValue(generateGainParamString(filterNum))-> load());
+      parametricParams.gain = Decibel <float> (apvts.getRawParameterValue(generateGainParamString(channel, filterNum))-> load());
  
       return parametricParams;
                         
@@ -142,15 +154,15 @@ private:
     
     
     template <const int filterNum>
-       HighCutLowCutParameters getCutFilterParams(double sampleRate,bool isLowCut)
+       HighCutLowCutParameters getCutFilterParams(Channel channel, double sampleRate,bool isLowCut)
        {
            using namespace FilterInfo;
            
-           float frequency = apvts.getRawParameterValue(generateFreqParamString(filterNum))->load();
-           float quality  = apvts.getRawParameterValue(generateQParamString(filterNum))->load();
-           bool bypassed = apvts.getRawParameterValue(generateBypassParamString(filterNum))->load() > 0.5f;
+           float frequency = apvts.getRawParameterValue(generateFreqParamString(channel, filterNum))->load();
+           float quality  = apvts.getRawParameterValue(generateQParamString(channel, filterNum))->load();
+           bool bypassed = apvts.getRawParameterValue(generateBypassParamString(channel, filterNum))->load() > 0.5f;
            
-           Slope slope = static_cast<Slope> (apvts.getRawParameterValue(generateSlopeParamString(filterNum))->load());
+           Slope slope = static_cast<Slope> (apvts.getRawParameterValue(generateSlopeParamString(channel, filterNum))->load());
            
            HighCutLowCutParameters cutParams;
                
@@ -197,15 +209,17 @@ private:
     template <const int filterNum>
     void preUpdateParametricFilter(double sampleRate)
     {
-        FilterParameters parametricParams = getParametericFilterParams<filterNum>(sampleRate);
+//        FilterParameters parametricParams = getParametericFilterParams<filterNum>(sampleRate);
+        FilterParameters parametricParamsLeft = getParametericFilterParams<filterNum>(Channel::Left, sampleRate);
+        FilterParameters parametricParamsRight = getParametericFilterParams<filterNum>(Channel::Right, sampleRate);
         
-        leftChain.get<filterNum>().performPreLoopUpdate(parametricParams);
-        rightChain.get<filterNum>().performPreLoopUpdate(parametricParams);
+        leftChain.get<filterNum>().performPreLoopUpdate(parametricParamsLeft);
+        rightChain.get<filterNum>().performPreLoopUpdate(parametricParamsRight);
     }
     
     
     template <const int filterNum>
-    void loopUpdateParametricFilter(double sampleRate, int samplesToSkip)
+    void loopUpdateParametricFilter(int samplesToSkip)
     {
         leftChain.get<filterNum>().performInnerLoopFilterUpdate(true, samplesToSkip);
         rightChain.get<filterNum>().performInnerLoopFilterUpdate(true, samplesToSkip);
@@ -216,15 +230,17 @@ private:
     template <const int filterNum>
     void preUpdateCutFilter(double sampleRate, bool isLowCut)
     {
-        HighCutLowCutParameters cutParams = getCutFilterParams<filterNum>(sampleRate, isLowCut);
+//        HighCutLowCutParameters cutParams = getCutFilterParams<filterNum>(sampleRate, isLowCut);
+        HighCutLowCutParameters cutParamsLeft = getCutFilterParams<filterNum>(Channel::Left, sampleRate, isLowCut);
+        HighCutLowCutParameters cutParamsRight = getCutFilterParams<filterNum>(Channel::Right, sampleRate, isLowCut);
             
-        leftChain.get<filterNum>().performPreLoopUpdate(cutParams);
-        rightChain.get<filterNum>().performPreLoopUpdate(cutParams);
+        leftChain.get<filterNum>().performPreLoopUpdate(cutParamsLeft);
+        rightChain.get<filterNum>().performPreLoopUpdate(cutParamsRight);
    
     }
     
     template <const int filterNum>
-    void loopUpdateCutFilter(double sampleRate, bool isLowCut, int samplesToSkip)
+    void loopUpdateCutFilter(int samplesToSkip)
     {
         leftChain.get<filterNum>().performInnerLoopFilterUpdate(true, samplesToSkip);
         rightChain.get<filterNum>().performInnerLoopFilterUpdate(true, samplesToSkip);
@@ -240,8 +256,8 @@ private:
     }
 
 
-    void initializeFilters(double sampleRate);
-    void performInnerLoopUpdate(double sampleRate, int samplesToSkip);
+    void initializeFilters(Channel channel, double sampleRate);
+    void performInnerLoopUpdate(int samplesToSkip);
     void performPreLoopUpdate(double sampleRate);
     void updateTrims();
 

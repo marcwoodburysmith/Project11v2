@@ -41,74 +41,6 @@ Project11v2AudioProcessor::~Project11v2AudioProcessor()
 }
 //==============================================================================
 
-//void Project11v2AudioProcessor::updateFilters(double sampleRate)
-//{
-//    
-////    int filterNum = 0;
-//    
-//    auto gain = apvts.getRawParameterValue(generateGainParamString(0))->load();
-//    auto qual = apvts.getRawParameterValue(generateQParamString(0))->load();
-//    auto freq = apvts.getRawParameterValue(generateFreqParamString(0))->load();
-//    bool bypass = apvts.getRawParameterValue(generateBypassParamString(0))->load() > 0.5f;
-//    
-//    
-//    FilterInfo::FilterType type = static_cast<FilterInfo::FilterType>(apvts.getRawParameterValue(generateTypeParamString(0))->load() );
-//    
-//    if( type == FilterInfo::FilterType::LowPass || type == FilterInfo::FilterType::HighPass || type == FilterInfo::FilterType::FirstOrderHighPass || type == FilterInfo::FilterType::FirstOrderLowPass )
-//    {
-//        HighCutLowCutParameters cutParams;
-//        
-//        cutParams.isLowcut = ( type == FilterInfo::FilterType::LowPass || type == FilterInfo::FilterType::FirstOrderLowPass );
-//        cutParams.frequency = freq;
-//        cutParams.bypassed = bypass;
-//        cutParams.order = 1;
-//        
-//        if (type == FilterInfo::FilterType::HighPass || type == FilterInfo::FilterType::LowPass)
-//                    cutParams.order = 2;
-//        
-//        cutParams.sampleRate = getSampleRate();
-//        cutParams.quality = qual;
-//        
-//        if( type != oldFilterType || cutParams != oldCutParams )
-//        {
-//            auto chainCoefficients = CoefficientMaker::makeCoefficients(cutParams);
-//            leftChain.setBypassed<0>(bypass);
-//            rightChain.setBypassed<0>(bypass);
-//            *(leftChain.get<0>().coefficients) = *(chainCoefficients[0]);
-//            *(rightChain.get<0>().coefficients) = *(chainCoefficients[0]);
-//        }
-//        
-//        
-//        oldCutParams = cutParams;
-//        
-//    }
-//    else
-//    {
-//        FilterParameters parametricParams;
-//        
-//        parametricParams.gain = gain;
-//        parametricParams.frequency = freq;
-//        parametricParams.sampleRate = getSampleRate();
-//        parametricParams.quality = qual;
-//        parametricParams.bypassed = bypass;
-//        parametricParams.filterType = type;
-//        
-//        if ( type != oldFilterType || parametricParams != oldParametricParams )
-//        {
-//            auto chainCoefficients = CoefficientMaker::makeCoefficients(parametricParams);
-//            leftChain.setBypassed<0>(bypass);
-//            rightChain.setBypassed<0>(bypass);
-//            *(leftChain.get<0>().coefficients) = *chainCoefficients;
-//            *(rightChain.get<0>().coefficients) = *chainCoefficients;
-//        }
-//        
-//        oldParametricParams = parametricParams;
-//    }
-//    
-//    
-//}
-
-
 
 void Project11v2AudioProcessor::performPreLoopUpdate(double sampleRate)
 {
@@ -122,21 +54,21 @@ void Project11v2AudioProcessor::performPreLoopUpdate(double sampleRate)
     preUpdateCutFilter<7>(sampleRate, false);
 }
 
-void Project11v2AudioProcessor::performInnerLoopUpdate(double sampleRate, int numSamplesToSkip)
+void Project11v2AudioProcessor::performInnerLoopUpdate(int numSamplesToSkip)
 {
-    loopUpdateCutFilter<0>(sampleRate, true, numSamplesToSkip);
-    loopUpdateParametricFilter<1>(sampleRate, numSamplesToSkip);
-    loopUpdateParametricFilter<2>(sampleRate, numSamplesToSkip);
-    loopUpdateParametricFilter<3>(sampleRate, numSamplesToSkip);
-    loopUpdateParametricFilter<4>(sampleRate, numSamplesToSkip);
-    loopUpdateParametricFilter<5>(sampleRate, numSamplesToSkip);
-    loopUpdateParametricFilter<6>(sampleRate, numSamplesToSkip);
-    loopUpdateCutFilter<7>(sampleRate, false, numSamplesToSkip);
+    loopUpdateCutFilter<0>(numSamplesToSkip);
+    loopUpdateParametricFilter<1>(numSamplesToSkip);
+    loopUpdateParametricFilter<2>(numSamplesToSkip);
+    loopUpdateParametricFilter<3>(numSamplesToSkip);
+    loopUpdateParametricFilter<4>(numSamplesToSkip);
+    loopUpdateParametricFilter<5>(numSamplesToSkip);
+    loopUpdateParametricFilter<6>(numSamplesToSkip);
+    loopUpdateCutFilter<7>(numSamplesToSkip);
 }
 
 //==============================================================================
 
-void Project11v2AudioProcessor::initializeFilters(double sampleRate)
+void Project11v2AudioProcessor::initializeFilters(Channel channel, double sampleRate)
 {
     
     // check if on realtime thread
@@ -145,19 +77,30 @@ void Project11v2AudioProcessor::initializeFilters(double sampleRate)
         
     // initialize filters
       
-       initializeChain<1>(getParametericFilterParams<1>(sampleRate),onRealTimeThread,sampleRate);
-       initializeChain<2>(getParametericFilterParams<2>(sampleRate),onRealTimeThread,sampleRate);
-       initializeChain<3>(getParametericFilterParams<3>(sampleRate),onRealTimeThread,sampleRate);
-       initializeChain<4>(getParametericFilterParams<4>(sampleRate),onRealTimeThread,sampleRate);
-       initializeChain<5>(getParametericFilterParams<5>(sampleRate),onRealTimeThread,sampleRate);
-       initializeChain<6>(getParametericFilterParams<6>(sampleRate),onRealTimeThread,sampleRate);
+//       initializeChain<1>(getParametericFilterParams<1>(sampleRate),onRealTimeThread,sampleRate);
+//       initializeChain<2>(getParametericFilterParams<2>(sampleRate),onRealTimeThread,sampleRate);
+//       initializeChain<3>(getParametericFilterParams<3>(sampleRate),onRealTimeThread,sampleRate);
+//       initializeChain<4>(getParametericFilterParams<4>(sampleRate),onRealTimeThread,sampleRate);
+//       initializeChain<5>(getParametericFilterParams<5>(sampleRate),onRealTimeThread,sampleRate);
+//       initializeChain<6>(getParametericFilterParams<6>(sampleRate),onRealTimeThread,sampleRate);
+    
+       initializeChain<1>(getParametericFilterParams<1>(channel, sampleRate), onRealTimeThread, sampleRate);
+       initializeChain<2>(getParametericFilterParams<2>(channel, sampleRate), onRealTimeThread, sampleRate);
+       initializeChain<3>(getParametericFilterParams<3>(channel, sampleRate), onRealTimeThread, sampleRate);
+       initializeChain<4>(getParametericFilterParams<4>(channel, sampleRate), onRealTimeThread, sampleRate);
+       initializeChain<5>(getParametericFilterParams<5>(channel, sampleRate), onRealTimeThread, sampleRate);
+       initializeChain<6>(getParametericFilterParams<6>(channel, sampleRate), onRealTimeThread, sampleRate);
        
        
        //low cut filter, and then high cut
-       HighCutLowCutParameters lowCutParams = getCutFilterParams<0>(sampleRate, true);
-       initializeChain<0>(lowCutParams,onRealTimeThread,sampleRate);
-       HighCutLowCutParameters highCutParams = getCutFilterParams<7>(sampleRate, false);
-       initializeChain<7>(highCutParams,onRealTimeThread,sampleRate);
+//       HighCutLowCutParameters lowCutParams = getCutFilterParams<0>(sampleRate, true);
+//       initializeChain<0>(lowCutParams,onRealTimeThread,sampleRate);
+//       HighCutLowCutParameters highCutParams = getCutFilterParams<7>(sampleRate, false);
+//       initializeChain<7>(highCutParams,onRealTimeThread,sampleRate);
+    HighCutLowCutParameters lowCutParams = getCutFilterParams<0>(channel, sampleRate, true);
+    initializeChain<0>(lowCutParams,onRealTimeThread,sampleRate);
+    HighCutLowCutParameters highCutParams = getCutFilterParams<7>(channel, sampleRate, false);
+    initializeChain<7>(highCutParams,onRealTimeThread,sampleRate);
 
 
 }
@@ -166,15 +109,23 @@ void Project11v2AudioProcessor::initializeFilters(double sampleRate)
 //==============================================================================
 
 void Project11v2AudioProcessor::addFilterParamToLayout(juce::AudioProcessorValueTreeState::ParameterLayout& layout,
+                                                        Channel channel,
                             int filterNum,
                             bool isCut)
 {
     const int versionID = 1;
     
-    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID{generateBypassParamString(filterNum), versionID},generateBypassParamString(filterNum),false) );
+    auto label = generateBypassParamString(channel, filterNum);
+    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID{label, 1}, label ,false) );
+    
+//    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID{generateBypassParamString(filterNum), versionID},generateBypassParamString(filterNum),false) );
+    
         
-    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateFreqParamString(filterNum), versionID}, generateFreqParamString(filterNum),
-                                       juce::NormalisableRange<float>(20.0f, 20000.0f, 1.0f, 0.25f), 20.0f));
+//    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateFreqParamString(filterNum), versionID}, generateFreqParamString(filterNum),
+//                                       juce::NormalisableRange<float>(20.0f, 20000.0f, 1.0f, 0.25f), 20.0f));
+    label = generateFreqParamString(channel, filterNum);
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{label, 1}, label,
+                                          juce::NormalisableRange<float>(20.0f, 20000.0f, 1.0f, 0.25f), 20.0f));
     
     
 
@@ -184,11 +135,20 @@ void Project11v2AudioProcessor::addFilterParamToLayout(juce::AudioProcessorValue
 //        layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateQParamString(filterNum), versionID}, generateQParamString(filterNum),
 //                                           juce::NormalisableRange<float>(0.1f, 10.f, 0.05f, 1.0f), 1.0f));
         
-        layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateQParamString(filterNum), 1}, generateQParamString(filterNum),
-                                              juce::NormalisableRange<float>(0.1f, 10.f, 0.05f, 1.0f), 1.0f));
+//        layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateQParamString(filterNum), 1}, generateQParamString(filterNum),
+//                                              juce::NormalisableRange<float>(0.1f, 10.f, 0.05f, 1.0f), 1.0f));
+//        
+//        layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateGainParamString(filterNum), versionID}, generateGainParamString(filterNum),
+//                                           juce::NormalisableRange<float>(-24.f, 24.f, 0.5f, 1.0f), 0.0f));
         
-        layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateGainParamString(filterNum), versionID}, generateGainParamString(filterNum),
-                                           juce::NormalisableRange<float>(-24.f, 24.f, 0.5f, 1.0f), 0.0f));
+       label = generateQParamString(channel, filterNum);
+        layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{label, 1}, label,
+                                                  juce::NormalisableRange<float>(0.1f, 10.f, 0.05f, 1.0f), 1.0f));
+               
+       label = generateGainParamString(channel, filterNum);
+        layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{label, 1}, label,
+                                          juce::NormalisableRange<float>(-24.f, 24.f, 0.5f, 1.0f), 0.0f));
+
 
         
         juce::StringArray types;
@@ -200,14 +160,23 @@ void Project11v2AudioProcessor::addFilterParamToLayout(juce::AudioProcessorValue
             types.add(stringRep);
         }
         
+        label = generateTypeParamString(channel, filterNum);
+        layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{label, 1}, label, types, 10));
+
         
-        layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{generateTypeParamString(filterNum), versionID}, generateTypeParamString(filterNum), types, 0));
+        
+//        layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{generateTypeParamString(filterNum), versionID}, generateTypeParamString(filterNum), types, 0));
         
     }
     else
     {
-        layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateQParamString(filterNum), 1}, generateQParamString(filterNum),
+//        layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateQParamString(filterNum), 1}, generateQParamString(filterNum),
+//                                                  juce::NormalisableRange<float>(0.1f, 10.f, 0.01f, 1.0f), 0.71f));
+        
+        label = generateQParamString(channel, filterNum);
+        layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{label, 1}, label,
                                                   juce::NormalisableRange<float>(0.1f, 10.f, 0.01f, 1.0f), 0.71f));
+
 
         juce::StringArray slopes;
                 
@@ -216,12 +185,27 @@ void Project11v2AudioProcessor::addFilterParamToLayout(juce::AudioProcessorValue
                     slopes.add(stringRep);
                 }
 
-        layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{generateSlopeParamString(filterNum), versionID},
-                                                                generateSlopeParamString(filterNum), slopes, 0));
+//        layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{generateSlopeParamString(filterNum), versionID},
+//                                                                generateSlopeParamString(filterNum), slopes, 0));
+        label = generateSlopeParamString(channel, filterNum);
+        layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{label, 1}, label, slopes, 0));
             
     }
 
 }
+
+void Project11v2AudioProcessor::createFilterLayouts(ParamLayout& layout, Channel channel)
+{
+    addFilterParamToLayout(layout, channel, 0, true);
+    addFilterParamToLayout(layout, channel, 1, false);
+    addFilterParamToLayout(layout, channel, 2, false);
+    addFilterParamToLayout(layout, channel, 3, false);
+    addFilterParamToLayout(layout, channel, 4, false);
+    addFilterParamToLayout(layout, channel, 5, false);
+    addFilterParamToLayout(layout, channel, 6, false);
+    addFilterParamToLayout(layout, channel, 7, true);
+}
+
 
 
 juce::AudioProcessorValueTreeState::ParameterLayout Project11v2AudioProcessor::createParameterLayout()
@@ -232,20 +216,23 @@ juce::AudioProcessorValueTreeState::ParameterLayout Project11v2AudioProcessor::c
                                                                juce::NormalisableRange<float>(-18.f, 18.f, 0.5f, 1.0f), 0.0f));
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"output_trim", 1}, "output_trim",
                                                                juce::NormalisableRange<float>(-18.f, 18.f, 0.5f, 1.0f), 0.0f));
+    
+    createFilterLayouts(layout, Channel::Left);
+    createFilterLayouts(layout, Channel::Right);
 
 
 
 //    addFilterParamToLayout(layout, 0, true);
 //    addFilterParamToLayout(layout, 1, false);
 //    addFilterParamToLayout(layout, 2, true);
-    addFilterParamToLayout(layout, 0, true);
-    addFilterParamToLayout(layout, 1, false);
-    addFilterParamToLayout(layout, 2, false);
-    addFilterParamToLayout(layout, 3, false);
-    addFilterParamToLayout(layout, 4, false);
-    addFilterParamToLayout(layout, 5, false);
-    addFilterParamToLayout(layout, 6, false);
-    addFilterParamToLayout(layout, 7, true);
+//    addFilterParamToLayout(layout, 0, true);
+//    addFilterParamToLayout(layout, 1, false);
+//    addFilterParamToLayout(layout, 2, false);
+//    addFilterParamToLayout(layout, 3, false);
+//    addFilterParamToLayout(layout, 4, false);
+//    addFilterParamToLayout(layout, 5, false);
+//    addFilterParamToLayout(layout, 6, false);
+//    addFilterParamToLayout(layout, 7, true);
     
     return layout;
 }
@@ -357,8 +344,9 @@ void Project11v2AudioProcessor::prepareToPlay (double sampleRate, int samplesPer
 //   //TODO replace these with initialize stuff.
 //   updateCutFilter<0>(sampleRate, true, oldHighCutParams, true);
 //   updateCutFilter<2>(sampleRate, true, oldLowCutParams, false);
-    initializeFilters(sampleRate);
-    
+//    initializeFilters(sampleRate);
+    initializeFilters(Channel::Left, sampleRate);
+    initializeFilters(Channel::Right, sampleRate);
 //    updateFilters(sampleRate,true);
 }
 
@@ -439,7 +427,7 @@ void Project11v2AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
         auto leftBlock = subBlock.getSingleChannelBlock(0);
         auto rightBlock = subBlock.getSingleChannelBlock(1);
         
-        performInnerLoopUpdate(getSampleRate(), blockSize);
+        performInnerLoopUpdate(blockSize);
         juce::dsp::ProcessContextReplacing<float> leftContext(leftBlock);
         juce::dsp::ProcessContextReplacing<float> rightContext(rightBlock);
         leftChain.process(leftContext);
@@ -485,7 +473,9 @@ void Project11v2AudioProcessor::setStateInformation (const void* data, int sizeI
     if (xmlState.get() != nullptr)
             if (xmlState->hasTagName (apvts.state.getType()))
                     apvts.replaceState (juce::ValueTree::fromXml (*xmlState));
-    initializeFilters(getSampleRate());
+//    initializeFilters(getSampleRate());
+    initializeFilters(Channel::Left, getSampleRate());
+    initializeFilters(Channel::Right, getSampleRate());
 
 }
 
