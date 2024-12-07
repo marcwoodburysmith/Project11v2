@@ -14,6 +14,16 @@
 
 enum class Channel {Left, Right};
 
+
+enum class ChannelMode {Stereo, DualMono, MidSide};
+
+const std::map<ChannelMode,juce::String>  mapModeToString
+{
+    {ChannelMode::Stereo, "Stereo"},
+    {ChannelMode::DualMono, "DualMono"},
+    {ChannelMode::MidSide, "Mid-Side"},
+};
+
 juce::String ParamString(juce::String label, int filterNum);
 
 juce::String generateGainParamString(Channel channel, int filterNum);

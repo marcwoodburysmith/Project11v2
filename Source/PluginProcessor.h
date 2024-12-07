@@ -207,11 +207,18 @@ private:
 //       }
 //    
     template <const int filterNum>
-    void preUpdateParametricFilter(double sampleRate)
+    void preUpdateParametricFilter(ChannelMode mode, double sampleRate)
     {
 //        FilterParameters parametricParams = getParametericFilterParams<filterNum>(sampleRate);
         FilterParameters parametricParamsLeft = getParametericFilterParams<filterNum>(Channel::Left, sampleRate);
-        FilterParameters parametricParamsRight = getParametericFilterParams<filterNum>(Channel::Right, sampleRate);
+//        FilterParameters parametricParamsRight = getParametericFilterParams<filterNum>(Channel::Right, sampleRate);
+        
+        FilterParameters parametricParamsRight;
+                
+        if(mode == ChannelMode::Stereo)
+            parametricParamsRight = parametricParamsLeft;
+        else
+            parametricParamsRight = getParametericFilterParams<filterNum>(Channel::Right, sampleRate);
         
         leftChain.get<filterNum>().performPreLoopUpdate(parametricParamsLeft);
         rightChain.get<filterNum>().performPreLoopUpdate(parametricParamsRight);
@@ -228,11 +235,18 @@ private:
         
         
     template <const int filterNum>
-    void preUpdateCutFilter(double sampleRate, bool isLowCut)
+    void preUpdateCutFilter(ChannelMode mode, double sampleRate, bool isLowCut)
     {
 //        HighCutLowCutParameters cutParams = getCutFilterParams<filterNum>(sampleRate, isLowCut);
         HighCutLowCutParameters cutParamsLeft = getCutFilterParams<filterNum>(Channel::Left, sampleRate, isLowCut);
-        HighCutLowCutParameters cutParamsRight = getCutFilterParams<filterNum>(Channel::Right, sampleRate, isLowCut);
+//        HighCutLowCutParameters cutParamsRight = getCutFilterParams<filterNum>(Channel::Right, sampleRate, isLowCut);
+        
+        HighCutLowCutParameters cutParamsRight;
+                
+        if(mode == ChannelMode::Stereo)
+            cutParamsRight = cutParamsLeft;
+        else
+            cutParamsRight = getCutFilterParams<filterNum>(Channel::Right, sampleRate, isLowCut);
             
         leftChain.get<filterNum>().performPreLoopUpdate(cutParamsLeft);
         rightChain.get<filterNum>().performPreLoopUpdate(cutParamsRight);
@@ -258,8 +272,13 @@ private:
 
     void initializeFilters(Channel channel, double sampleRate);
     void performInnerLoopUpdate(int samplesToSkip);
-    void performPreLoopUpdate(double sampleRate);
+    void performPreLoopUpdate(ChannelMode mode, double sampleRate);
     void updateTrims();
+    
+    void performHadamard(juce::dsp::AudioBlock<float>& A, juce::dsp::AudioBlock<float>& B);
+    
+    void performMidSideTransform(juce::AudioBuffer<float>&);
+
 
 
 //    void updateFilters(double sampleRate);

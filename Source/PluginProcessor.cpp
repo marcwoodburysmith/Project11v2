@@ -42,16 +42,25 @@ Project11v2AudioProcessor::~Project11v2AudioProcessor()
 //==============================================================================
 
 
-void Project11v2AudioProcessor::performPreLoopUpdate(double sampleRate)
+void Project11v2AudioProcessor::performPreLoopUpdate(ChannelMode mode, double sampleRate)
 {
-    preUpdateCutFilter<0>(sampleRate, true);
-    preUpdateParametricFilter<1>(sampleRate);
-    preUpdateParametricFilter<2>(sampleRate);
-    preUpdateParametricFilter<3>(sampleRate);
-    preUpdateParametricFilter<4>(sampleRate);
-    preUpdateParametricFilter<5>(sampleRate);
-    preUpdateParametricFilter<6>(sampleRate);
-    preUpdateCutFilter<7>(sampleRate, false);
+//    preUpdateCutFilter<0>(sampleRate, true);
+//    preUpdateParametricFilter<1>(sampleRate);
+//    preUpdateParametricFilter<2>(sampleRate);
+//    preUpdateParametricFilter<3>(sampleRate);
+//    preUpdateParametricFilter<4>(sampleRate);
+//    preUpdateParametricFilter<5>(sampleRate);
+//    preUpdateParametricFilter<6>(sampleRate);
+//    preUpdateCutFilter<7>(sampleRate, false);
+   preUpdateCutFilter<0>(mode, sampleRate, true);
+   preUpdateParametricFilter<1>(mode, sampleRate);
+   preUpdateParametricFilter<2>(mode, sampleRate);
+   preUpdateParametricFilter<3>(mode, sampleRate);
+   preUpdateParametricFilter<4>(mode, sampleRate);
+   preUpdateParametricFilter<5>(mode, sampleRate);
+   preUpdateParametricFilter<6>(mode, sampleRate);
+   preUpdateCutFilter<7>(mode, sampleRate, false);
+
 }
 
 void Project11v2AudioProcessor::performInnerLoopUpdate(int numSamplesToSkip)
@@ -212,6 +221,16 @@ juce::AudioProcessorValueTreeState::ParameterLayout Project11v2AudioProcessor::c
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
     
+    juce::StringArray modes;
+       
+       for (const auto& [mode, stringRep] : mapModeToString)
+       {
+           modes.add(stringRep);
+       }
+       
+    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{"Processing Mode", 1}, "Processing Mode", modes, 0));
+
+    
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"input_trim", 1}, "input_trim",
                                                                juce::NormalisableRange<float>(-18.f, 18.f, 0.5f, 1.0f), 0.0f));
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"output_trim", 1}, "output_trim",
@@ -254,6 +273,44 @@ void Project11v2AudioProcessor::updateTrims()
 
 }
 
+
+//void Project11v2AudioProcessor::performHadamard(juce::dsp::AudioBlock<float>& A, juce::dsp::AudioBlock<float>& B)
+//{
+//    static const float sqrt2 = juce::MathConstants<float>::sqrt2;
+//    static const float invSqrt2 = 1.0f/sqrt2;
+//    
+//    // Hadamard transformation, not that this is involutory.
+//    // Anew = (A+B)/sqrt(2), Bnew = (A-B)/sqrt(2)
+//    A.add(B).multiplyBy(invSqrt2);
+//    // Bnew = -1*(sqrt(2)B-Anew) =  (A+B)/sqrt(2) -  sqrt(2)B= (A-B)/sqrt(2)
+//    B.multiplyBy(sqrt2).subtract(A).negate();
+//}
+
+void Project11v2AudioProcessor::performMidSideTransform(juce::AudioBuffer<float>& buffer)
+{
+    // AKA Hadamard transformation
+    // Anew = (A+B)/sqrt(2), Bnew = (A-B)/sqrt(2)
+    // note that this is involutory , i.e. a second call will undo the transformation
+    
+    static const float minus3db = 1.0f/juce::MathConstants<float>::sqrt2;
+
+    auto leftReadPtr = buffer.getReadPointer(0);
+    auto rightReadPtr = buffer.getReadPointer(1);
+
+    auto leftWritePtr = buffer.getWritePointer(0);
+    auto rightWritePtr = buffer.getWritePointer(1);
+    
+    int numSamples = buffer.getNumSamples();
+
+    for( int i=0; i < numSamples; i++ )
+    {
+         auto M = (leftReadPtr[i] + rightReadPtr[i]) * minus3db;
+         auto S = (leftReadPtr[i] - rightReadPtr[i]) * minus3db;
+
+         leftWritePtr[i] = M;
+         rightWritePtr[i] = S;
+    }
+}
 
 
 
@@ -399,44 +456,72 @@ void Project11v2AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
     
 //    updateFilters( getSampleRate() );
     updateTrims();
-    performPreLoopUpdate(getSampleRate());
+//    performPreLoopUpdate(getSampleRate());
 //    performInnerLoopUpdate(getSampleRate(), buffer.getNumSamples());
+    
+    ChannelMode mode = static_cast<ChannelMode>(apvts.getRawParameterValue("Processing Mode")->load());
+    
+    performPreLoopUpdate(mode, getSampleRate());
 
    
     
     
     juce::dsp::AudioBlock<float> block(buffer);
-    
+
     int numSamples = buffer.getNumSamples();
     int offset = 0;
     
     juce::dsp::ProcessContextReplacing<float> stereoContext(block);
     inputTrim.process(stereoContext);
+    
+//    auto leftBlock = block.getSingleChannelBlock(0);
+//    auto rightBlock = block.getSingleChannelBlock(1);
+    
+//    static const float sqrt2 = juce::MathConstants<float>::sqrt2;
+//    static const float invSqrt2 = 1.0f/sqrt2;
+
+    
+    if(mode == ChannelMode::MidSide)
+    {
+        
+//        leftBlock.add(rightBlock).multiplyBy(invSqrt2);
+//        // right = -1*(sqrt(2)R-Lnew) =  (L+R)/sqrt(2) -  sqrt(2)R= (L-R)/sqrt(2)
+//        rightBlock.multiplyBy(sqrt2).subtract(leftBlock).negate();
+//        performHadamard(leftBlock, rightBlock);
+        performMidSideTransform(buffer);
+    }
+    
+    auto leftBlock = block.getSingleChannelBlock(0);
+    auto rightBlock = block.getSingleChannelBlock(1);
 
     
     while(offset < numSamples)
     {
         int blockSize = std::min(numSamples - offset, innerLoopSize);
-        auto subBlock =  block.getSubBlock(offset, blockSize);
-        
-        // Context for processing all channels
-//       juce::dsp::ProcessContextReplacing<float> stereoContext(subBlock);
-//       inputTrim.process(stereoContext);
-
-        
-        auto leftBlock = subBlock.getSingleChannelBlock(0);
-        auto rightBlock = subBlock.getSingleChannelBlock(1);
-        
+        auto leftSubBlock =  leftBlock.getSubBlock(offset, blockSize);
+        auto rightSubBlock = rightBlock.getSubBlock(offset, blockSize);
+ 
         performInnerLoopUpdate(blockSize);
-        juce::dsp::ProcessContextReplacing<float> leftContext(leftBlock);
-        juce::dsp::ProcessContextReplacing<float> rightContext(rightBlock);
+        
+        juce::dsp::ProcessContextReplacing<float> leftContext(leftSubBlock);
+        juce::dsp::ProcessContextReplacing<float> rightContext(rightSubBlock);
         leftChain.process(leftContext);
         rightChain.process(rightContext);
-        
-        
-
+                
         offset += innerLoopSize;
     }
+    
+    if(mode == ChannelMode::MidSide)
+    {
+        
+//       leftBlock.add(rightBlock).multiplyBy(invSqrt2);
+//       // right is (M-S)/sqrt(2).   Right =-1( sqrt(2)*S-Lnew) = (M+S)/sqrt(2) - sqrt(2)S = (M-S)/sqrt(2)
+//       rightBlock.multiplyBy(sqrt2).subtract(leftBlock).negate();
+//        performHadamard(leftBlock, rightBlock);
+        performMidSideTransform(buffer);
+    }
+        
+
     outputTrim.process(stereoContext);
 
 }
