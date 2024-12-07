@@ -176,10 +176,16 @@ void Project11v2AudioProcessor::addFilterParamToLayout(juce::AudioProcessorValue
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateFreqParamString(filterNum), versionID}, generateFreqParamString(filterNum),
                                        juce::NormalisableRange<float>(20.0f, 20000.0f, 1.0f, 0.25f), 20.0f));
     
+    
+
+    
     if (!isCut )
     {
-        layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateQParamString(filterNum), versionID}, generateQParamString(filterNum),
-                                           juce::NormalisableRange<float>(0.1f, 10.f, 0.05f, 1.0f), 1.0f));
+//        layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateQParamString(filterNum), versionID}, generateQParamString(filterNum),
+//                                           juce::NormalisableRange<float>(0.1f, 10.f, 0.05f, 1.0f), 1.0f));
+        
+        layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateQParamString(filterNum), 1}, generateQParamString(filterNum),
+                                              juce::NormalisableRange<float>(0.1f, 10.f, 0.05f, 1.0f), 1.0f));
         
         layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateGainParamString(filterNum), versionID}, generateGainParamString(filterNum),
                                            juce::NormalisableRange<float>(-24.f, 24.f, 0.5f, 1.0f), 0.0f));
@@ -200,6 +206,9 @@ void Project11v2AudioProcessor::addFilterParamToLayout(juce::AudioProcessorValue
     }
     else
     {
+        layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{generateQParamString(filterNum), 1}, generateQParamString(filterNum),
+                                                  juce::NormalisableRange<float>(0.1f, 10.f, 0.01f, 1.0f), 0.71f));
+
         juce::StringArray slopes;
                 
                 for (const auto& [order, stringRep] : FilterInfo::slopeToString)
@@ -218,6 +227,13 @@ void Project11v2AudioProcessor::addFilterParamToLayout(juce::AudioProcessorValue
 juce::AudioProcessorValueTreeState::ParameterLayout Project11v2AudioProcessor::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
+    
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"input_trim", 1}, "input_trim",
+                                                               juce::NormalisableRange<float>(-18.f, 18.f, 0.5f, 1.0f), 0.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"output_trim", 1}, "output_trim",
+                                                               juce::NormalisableRange<float>(-18.f, 18.f, 0.5f, 1.0f), 0.0f));
+
+
 
 //    addFilterParamToLayout(layout, 0, true);
 //    addFilterParamToLayout(layout, 1, false);
@@ -232,6 +248,23 @@ juce::AudioProcessorValueTreeState::ParameterLayout Project11v2AudioProcessor::c
     addFilterParamToLayout(layout, 7, true);
     
     return layout;
+}
+
+void Project11v2AudioProcessor::updateTrims()
+{
+    
+//    float inputTrim = apvts.getRawParameterValue("input_trim")->load();
+//    float outputTrim = apvts.getRawParameterValue("output_trim")->load();
+//    leftChain.get<InputTrim>().setGainDecibels(inputTrim);
+//    rightChain.get<InputTrim>().setGainDecibels(inputTrim);
+//    leftChain.get<OutputTrim>().setGainDecibels(outputTrim);
+//    rightChain.get<OutputTrim>().setGainDecibels(outputTrim);
+    float inputGain= apvts.getRawParameterValue("input_trim")->load();
+    float outputGain = apvts.getRawParameterValue("output_trim")->load();
+    inputTrim.setGainDecibels(inputGain);
+    outputTrim.setGainDecibels(outputGain);
+     
+
 }
 
 
@@ -312,6 +345,11 @@ void Project11v2AudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     leftChain.prepare(spec);
     rightChain.prepare(spec);
     
+    // reuse spec
+   spec.numChannels = 2;
+   inputTrim.prepare(spec);
+   outputTrim.prepare(spec);
+    
 // initialize filters first.
 //   FilterParameters paramatricParams = getParametericFilterParams<1>(sampleRate);
 //   leftChain.get<1>().initialize(paramatricParams, 0.0, false, sampleRate);
@@ -372,19 +410,32 @@ void Project11v2AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
         buffer.clear (i, 0, buffer.getNumSamples());
     
 //    updateFilters( getSampleRate() );
+    updateTrims();
     performPreLoopUpdate(getSampleRate());
 //    performInnerLoopUpdate(getSampleRate(), buffer.getNumSamples());
 
+   
+    
     
     juce::dsp::AudioBlock<float> block(buffer);
     
     int numSamples = buffer.getNumSamples();
     int offset = 0;
     
+    juce::dsp::ProcessContextReplacing<float> stereoContext(block);
+    inputTrim.process(stereoContext);
+
+    
     while(offset < numSamples)
     {
         int blockSize = std::min(numSamples - offset, innerLoopSize);
         auto subBlock =  block.getSubBlock(offset, blockSize);
+        
+        // Context for processing all channels
+//       juce::dsp::ProcessContextReplacing<float> stereoContext(subBlock);
+//       inputTrim.process(stereoContext);
+
+        
         auto leftBlock = subBlock.getSingleChannelBlock(0);
         auto rightBlock = subBlock.getSingleChannelBlock(1);
         
@@ -393,27 +444,12 @@ void Project11v2AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
         juce::dsp::ProcessContextReplacing<float> rightContext(rightBlock);
         leftChain.process(leftContext);
         rightChain.process(rightContext);
+        
+        
+
         offset += innerLoopSize;
     }
-
-    
-    
-//    auto leftBlock = block.getSingleChannelBlock(0);
-//    auto rightBlock = block.getSingleChannelBlock(1);
-//     
-//    
-//    juce::dsp::ProcessContextReplacing<float> leftContext(leftBlock);
-//    juce::dsp::ProcessContextReplacing<float> rightContext(rightBlock);
-//    leftChain.process(leftContext);
-//    rightChain.process(rightContext);
-
-    // test filter functions
-//    FilterParameters filterParams;  //use default values;
-//    auto coefficients = CoefficientMaker::makeCoefficients(filterParams);
-//       
-//    HighCutLowCutParameters lowCutParams;
-//    auto coefficientsArray = CoefficientMaker::makeCoefficients(lowCutParams);
-    
+    outputTrim.process(stereoContext);
 
 }
 
@@ -452,6 +488,8 @@ void Project11v2AudioProcessor::setStateInformation (const void* data, int sizeI
     initializeFilters(getSampleRate());
 
 }
+
+
 
 //==============================================================================
 // This creates new instances of the plugin..

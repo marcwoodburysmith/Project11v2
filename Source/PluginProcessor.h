@@ -30,15 +30,27 @@
 //using MonoChain = juce::dsp::ProcessorChain<CutFilter,ParametricFilter,CutFilter>;
 
 using Filter = juce::dsp::IIR::Filter<float>;
+using Trim = juce::dsp::Gain<float>;
 using CutChain = juce::dsp::ProcessorChain<Filter,Filter,Filter,Filter>;
 using CutFilter = FilterLink<CutChain, CutCoeffArray, HighCutLowCutParameters, CoefficientsMaker>;
 using ParametricFilter = FilterLink<Filter, FilterCoeffPtr, FilterParameters, CoefficientsMaker>;
+
+//enum ChainPos {InputTrim, FilterChain, OutputTrim };
 
 const float rampTime = 0.05f;  //50 mseconds
 const int innerLoopSize = 32;
  
 //using MonoChain = juce::dsp::ProcessorChain<CutFilter,ParametricFilter,CutFilter>;
-using MonoChain = juce::dsp::ProcessorChain<CutFilter,
+//using MonoChain = juce::dsp::ProcessorChain<CutFilter,
+//                                            ParametricFilter,
+//                                            ParametricFilter,
+//                                            ParametricFilter,
+//                                            ParametricFilter,
+//                                            ParametricFilter,
+//                                            ParametricFilter,
+//                                            CutFilter>;
+
+using MonoFilterChain = juce::dsp::ProcessorChain<CutFilter,
                                             ParametricFilter,
                                             ParametricFilter,
                                             ParametricFilter,
@@ -47,6 +59,9 @@ using MonoChain = juce::dsp::ProcessorChain<CutFilter,
                                             ParametricFilter,
                                             CutFilter>;
 
+//using MonoChain = juce::dsp::ProcessorChain<Trim,
+//                                            MonoFilterChain,
+//                                            Trim>;
 
 
 //==============================================================================
@@ -132,6 +147,7 @@ private:
            using namespace FilterInfo;
            
            float frequency = apvts.getRawParameterValue(generateFreqParamString(filterNum))->load();
+           float quality  = apvts.getRawParameterValue(generateQParamString(filterNum))->load();
            bool bypassed = apvts.getRawParameterValue(generateBypassParamString(filterNum))->load() > 0.5f;
            
            Slope slope = static_cast<Slope> (apvts.getRawParameterValue(generateSlopeParamString(filterNum))->load());
@@ -143,7 +159,7 @@ private:
            cutParams.bypassed = bypassed;
            cutParams.order = static_cast<int>(slope) + 1;
            cutParams.sampleRate = sampleRate;
-           cutParams.quality  = 1.0f; //not used for cut filters
+           cutParams.quality  = quality;
            
            return cutParams;
            
@@ -227,11 +243,14 @@ private:
     void initializeFilters(double sampleRate);
     void performInnerLoopUpdate(double sampleRate, int samplesToSkip);
     void performPreLoopUpdate(double sampleRate);
+    void updateTrims();
 
 
 //    void updateFilters(double sampleRate);
     
-    MonoChain leftChain, rightChain;
+//    MonoChain leftChain, rightChain;
+    MonoFilterChain leftChain, rightChain;
+    Trim inputTrim, outputTrim;
     
     
     

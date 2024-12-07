@@ -62,18 +62,20 @@ struct Fifo
             auto tempT {buffer[writeHandle.startIndex1]};
             buffer[writeHandle.startIndex1] = t;
             
+            jassert (tempT.get() == nullptr || tempT.get()->getReferenceCount() != 1);
+            
             // verify we are not about to delete the object that was at this index, if any!
-            if(tempT)
-            {
-                jassert (tempT.get()->getReferenceCount() > 1);
-            }
+//            if(tempT)
+//            {
+//                jassert (tempT.get()->getReferenceCount() > 1);
+//            }
         }
         else
         {
             buffer[writeHandle.startIndex1] = t;
         }
         
-        buffer[writeHandle.startIndex1] = t;
+//        buffer[writeHandle.startIndex1] = t;
         return true;
         
     }
