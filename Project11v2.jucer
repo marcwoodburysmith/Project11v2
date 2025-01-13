@@ -4,6 +4,10 @@
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1">
   <MAINGROUP id="BckxKw" name="Project11v2">
     <GROUP id="{9814709B-2041-D145-8BD5-23809E81AABF}" name="Source">
+      <FILE id="aVyh2P" name="DbScale.cpp" compile="1" resource="0" file="Source/DbScale.cpp"/>
+      <FILE id="BR8Q7L" name="DbScale.h" compile="0" resource="0" file="Source/DbScale.h"/>
+      <FILE id="RD6tPe" name="Meter.cpp" compile="1" resource="0" file="Source/Meter.cpp"/>
+      <FILE id="ISOfb4" name="Meter.h" compile="0" resource="0" file="Source/Meter.h"/>
       <FILE id="IweME9" name="HelperFunctions.h" compile="0" resource="0"
             file="Source/HelperFunctions.h"/>
       <FILE id="uiWlkq" name="CoeffTypeHelpers.h" compile="0" resource="0"
