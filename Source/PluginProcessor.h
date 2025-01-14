@@ -8,6 +8,8 @@
 
 #pragma once
 
+#define TESTMETER
+
 #include <JuceHeader.h>
 #include "FilterInfo.h"
 #include "FilterParametersBase.h"
@@ -118,6 +120,8 @@ public:
 //    void addFilterParamToLayout(juce::AudioProcessorValueTreeState::ParameterLayout&, int, bool);
     void addFilterParamToLayout(ParamLayout&, Channel, int, bool);
     void createFilterLayouts(ParamLayout& layout, Channel channel);
+    
+    Fifo<juce::AudioBuffer<float>, 30> inputBuffers;
 
 
 private:
@@ -288,7 +292,10 @@ private:
     Trim inputTrim, outputTrim;
     
     
-    
+#ifdef TESTMETER
+    juce::dsp::Oscillator<float> testOsc {[] (float x) { return std::sin (x); } , 128};
+    juce::dsp::Gain<float> testOscGain;
+#endif
 
     
     //==============================================================================

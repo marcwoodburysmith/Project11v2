@@ -27,12 +27,12 @@ struct Fifo
                       "prepare(numChannels, numSamples) should only be used when the Fifo is holding juce::AudioBuffer<float>");
         for( auto& audioBuffer : buffer)
         {
-            buffer.setSize(numChannels,
+            audioBuffer.setSize(numChannels,
                            numSamples,
                            false,   //clear everything?
                            true,    //including the extra space?
                            true);   //avoid reallocating if you can?
-            buffer.clear();
+            audioBuffer.clear();
         }
     }
     

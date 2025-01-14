@@ -405,6 +405,14 @@ void Project11v2AudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     initializeFilters(Channel::Left, sampleRate);
     initializeFilters(Channel::Right, sampleRate);
 //    updateFilters(sampleRate,true);
+    
+    inputBuffers.prepare(samplesPerBlock, getTotalNumInputChannels() );
+    
+#ifdef TESTMETER
+    testOsc.prepare(spec);
+    testOsc.setFrequency(440.0f);
+    testOscGain.prepare(spec);
+#endif
 }
 
 void Project11v2AudioProcessor::releaseResources()
@@ -464,7 +472,7 @@ void Project11v2AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
     performPreLoopUpdate(mode, getSampleRate());
 
    
-    
+  
     
     juce::dsp::AudioBlock<float> block(buffer);
 
@@ -473,6 +481,27 @@ void Project11v2AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
     
     juce::dsp::ProcessContextReplacing<float> stereoContext(block);
     inputTrim.process(stereoContext);
+    
+#ifdef TESTMETER
+    for( auto i = 0; i < totalNumOutputChannels; ++i)
+        buffer.clear (i, 0, numSamples);
+    
+    testOscGain.setGainDecibels(JUCE_LIVE_CONSTANT(0.0f));
+    for( auto j = 0; j < numSamples; ++j)
+    {
+        auto sample = testOsc.processSample(0.0f);
+        sample = testOscGain.processSample(sample);
+        buffer.setSample(0, j, sample);
+        buffer.setSample(1, j, sample);
+    }
+#endif
+    
+    inputBuffers.push(buffer);
+    
+#ifdef TESTMETER
+    for( auto i = 0; i < totalNumOutputChannels; ++i)
+        buffer.clear (i, 0, buffer.getNumSamples());
+#endif
     
 //    auto leftBlock = block.getSingleChannelBlock(0);
 //    auto rightBlock = block.getSingleChannelBlock(1);
@@ -534,8 +563,8 @@ bool Project11v2AudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* Project11v2AudioProcessor::createEditor()
 {
-//    return new Project11v2AudioProcessorEditor (*this);
-    return new juce::GenericAudioProcessorEditor(*this);
+    return new Project11v2AudioProcessorEditor (*this);
+//    return new juce::GenericAudioProcessorEditor(*this);
 }
 
 //==============================================================================

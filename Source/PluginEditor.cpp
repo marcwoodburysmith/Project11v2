@@ -13,9 +13,13 @@
 Project11v2AudioProcessorEditor::Project11v2AudioProcessorEditor (Project11v2AudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p)
 {
-    // Make sure that before the constructor has finished, you've set the
+   // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (400, 300);
+    addAndMakeVisible(inputMeter);
+    addAndMakeVisible(inputScale);
+    setSize (800, 600);
+    
+    startTimerHz(60);
 }
 
 Project11v2AudioProcessorEditor::~Project11v2AudioProcessorEditor()
@@ -37,4 +41,35 @@ void Project11v2AudioProcessorEditor::resized()
 {
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
+    auto bounds = getLocalBounds();
+    auto scaledMeterBounds = bounds.removeFromLeft(50);
+    inputScale.setBounds(scaledMeterBounds.removeFromLeft(25));
+    auto meterBounds = scaledMeterBounds.withTrimmedTop(10).withTrimmedBottom(10);
+    
+#ifdef TESTMETER
+    meterBounds.setY(JUCE_LIVE_CONSTANT(meterBounds.getY()));
+    meterBounds.setHeight(JUCE_LIVE_CONSTANT(meterBounds.getHeight()));
+#endif
+    
+    inputMeter.setBounds(meterBounds);
+    inputScale.buildBackgroundImage(TICK_INTERVAL, meterBounds, NEGATIVE_INFINITY, MAX_DECIBELS);
+    
+}
+
+void Project11v2AudioProcessorEditor::timerCallback()
+{
+    //if there is something in the buffer pull it
+    auto& inputFifo = audioProcessor.inputBuffers;
+    if (inputFifo.getNumAvailableForReading() > 0)
+    {
+        while ( inputFifo.pull(buffer) )
+        {
+            
+        }
+        auto magnitude = buffer.getMagnitude(0, 0, buffer.getNumSamples() );
+        inputMeter.update(juce::Decibels::gainToDecibels(magnitude, NEGATIVE_INFINITY ) );
+        
+    }
+    
+
 }
