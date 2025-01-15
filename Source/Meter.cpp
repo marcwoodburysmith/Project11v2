@@ -34,17 +34,12 @@ Meter::~Meter() {}
 
 void Meter::paint (juce::Graphics& g)
 {
-    g.fillAll(juce::Colours::black);
-    g.setColour(juce::Colours::white);
     auto bounds = getLocalBounds().toFloat();
-    auto bar {bounds};
+    g.fillAll(juce::Colours::black);
 
-//    juce::Rectangle<float> rect {getLocalBounds().toFloat() };
-//    auto bar {getLocalBounds().toFloat() };
-    float y = juce::jmap(peakDb, NEGATIVE_INFINITY, MAX_DECIBELS, bar.getHeight(), 0.f);
-    bar.setTop(y);
-    g.fillRect (bar);
-    
+    paintBar(g, peakDb, bounds, 0, juce::Colours::yellow);
+    paintBar(g, averager.getAvg(), bounds, bounds.getWidth()/4.0f, juce::Colours::green);
+
     if (decayingValueHolder.isOverThreshold() )
     {
         g.setColour(juce::Colours::red);
@@ -59,10 +54,24 @@ void Meter::paint (juce::Graphics& g)
     g.fillRect(bounds.getX(), decayBarY, bounds.getWidth(), DECAY_BAR_THICK);
 }
 
+void Meter::paintBar (juce::Graphics& g, float value, juce::Rectangle<float> bounds, float dWidth, juce::Colour color)
+{
+    auto bar { bounds };
+        
+    g.setColour(color);
+    float y = juce::jmap(value, NEGATIVE_INFINITY, MAX_DECIBELS, bar.getHeight(), 0.f);
+    bar.setTop(y);
+    bar.reduce(dWidth, 0);
+    g.fillRect(bar);
+
+}
+
+
 void Meter::update(float dBLevel)
 {
-    decayingValueHolder.updateHeldValue(dBLevel);
     peakDb = dBLevel;
+    averager.add(peakDb);
+    decayingValueHolder.updateHeldValue(dBLevel);
     repaint();
 }
 

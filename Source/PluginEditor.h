@@ -12,6 +12,7 @@
 #include "PluginProcessor.h"
 #include "Meter.h"
 #include "DbScale.h"
+#include "StereoMeter.h"
 
 
 

@@ -4,6 +4,9 @@
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1">
   <MAINGROUP id="BckxKw" name="Project11v2">
     <GROUP id="{9814709B-2041-D145-8BD5-23809E81AABF}" name="Source">
+      <FILE id="DNrU4l" name="StereoMeter.cpp" compile="1" resource="0" file="Source/StereoMeter.cpp"/>
+      <FILE id="EiU0Jx" name="StereoMeter.h" compile="0" resource="0" file="Source/StereoMeter.h"/>
+      <FILE id="RkXsEn" name="Averager.h" compile="0" resource="0" file="Source/Averager.h"/>
       <FILE id="NXnEIg" name="EQConstants.h" compile="0" resource="0" file="Source/EQConstants.h"/>
       <FILE id="EFlniN" name="DecayingValueHolder.cpp" compile="1" resource="0"
             file="Source/DecayingValueHolder.cpp"/>
