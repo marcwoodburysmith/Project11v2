@@ -10,10 +10,12 @@
 
 #pragma once
 #include <JuceHeader.h>
+#include "DecayingValueHolder.h"
+#include "EQConstants.h"
 
-#define NEGATIVE_INFINITY -66.f
-#define MAX_DECIBELS 12.f
+
 #define TICK_INTERVAL 6
+#define DECAY_BAR_THICK 4.f
 
 struct Meter : juce::Component
 {
@@ -25,4 +27,6 @@ struct Meter : juce::Component
     
 private:
     float peakDb { NEGATIVE_INFINITY };
+    
+    DecayingValueHolder decayingValueHolder;
 };

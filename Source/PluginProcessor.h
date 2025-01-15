@@ -8,7 +8,7 @@
 
 #pragma once
 
-#define TESTMETER
+//#define TESTMETER
 
 #include <JuceHeader.h>
 #include "FilterInfo.h"

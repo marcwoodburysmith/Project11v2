@@ -4,6 +4,11 @@
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1">
   <MAINGROUP id="BckxKw" name="Project11v2">
     <GROUP id="{9814709B-2041-D145-8BD5-23809E81AABF}" name="Source">
+      <FILE id="NXnEIg" name="EQConstants.h" compile="0" resource="0" file="Source/EQConstants.h"/>
+      <FILE id="EFlniN" name="DecayingValueHolder.cpp" compile="1" resource="0"
+            file="Source/DecayingValueHolder.cpp"/>
+      <FILE id="Yh6R1u" name="DecayingValueHolder.h" compile="0" resource="0"
+            file="Source/DecayingValueHolder.h"/>
       <FILE id="aVyh2P" name="DbScale.cpp" compile="1" resource="0" file="Source/DbScale.cpp"/>
       <FILE id="BR8Q7L" name="DbScale.h" compile="0" resource="0" file="Source/DbScale.h"/>
       <FILE id="RD6tPe" name="Meter.cpp" compile="1" resource="0" file="Source/Meter.cpp"/>
