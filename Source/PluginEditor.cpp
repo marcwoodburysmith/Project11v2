@@ -8,6 +8,7 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "MeterValues.h"
 
 //==============================================================================
 Project11v2AudioProcessorEditor::Project11v2AudioProcessorEditor (Project11v2AudioProcessor& p)
@@ -16,7 +17,7 @@ Project11v2AudioProcessorEditor::Project11v2AudioProcessorEditor (Project11v2Aud
    // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     addAndMakeVisible(inputMeter);
-    addAndMakeVisible(inputScale);
+//    addAndMakeVisible(inputScale);
     setSize (800, 600);
     
     startTimerHz(60);
@@ -41,18 +42,21 @@ void Project11v2AudioProcessorEditor::resized()
 {
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
+    const uint scaleAndMeterWidth = 75;
     auto bounds = getLocalBounds();
-    auto scaledMeterBounds = bounds.removeFromLeft(50);
-    inputScale.setBounds(scaledMeterBounds.removeFromLeft(25));
-    auto meterBounds = scaledMeterBounds.withTrimmedTop(10).withTrimmedBottom(10);
+    
+    bounds.reduce(10, 10);
+//    auto scaledMeterBounds = bounds.removeFromLeft(50);
+//    inputScale.setBounds(scaledMeterBounds.removeFromLeft(25));
+//    auto meterBounds = scaledMeterBounds.withTrimmedTop(10).withTrimmedBottom(10);
     
 #ifdef TESTMETER
     meterBounds.setY(JUCE_LIVE_CONSTANT(meterBounds.getY()));
     meterBounds.setHeight(JUCE_LIVE_CONSTANT(meterBounds.getHeight()));
 #endif
     
-    inputMeter.setBounds(meterBounds);
-    inputScale.buildBackgroundImage(TICK_INTERVAL, meterBounds, NEGATIVE_INFINITY, MAX_DECIBELS);
+    inputMeter.setBounds(bounds.removeFromLeft(scaleAndMeterWidth));
+//    inputScale.buildBackgroundImage(TICK_INTERVAL, meterBounds, NEGATIVE_INFINITY, MAX_DECIBELS);
     
 }
 
@@ -60,14 +64,20 @@ void Project11v2AudioProcessorEditor::timerCallback()
 {
     //if there is something in the buffer pull it
     auto& inputFifo = audioProcessor.inputBuffers;
+    
+    MeterValues inputValues;
+    
     if (inputFifo.getNumAvailableForReading() > 0)
     {
         while ( inputFifo.pull(buffer) )
         {
             
         }
-        auto magnitude = buffer.getMagnitude(0, 0, buffer.getNumSamples() );
-        inputMeter.update(juce::Decibels::gainToDecibels(magnitude, NEGATIVE_INFINITY ) );
+//        auto magnitude = buffer.getMagnitude(0, 0, buffer.getNumSamples() );
+//        inputMeter.update(juce::Decibels::gainToDecibels(magnitude, NEGATIVE_INFINITY ) );
+        inputValues.leftPeakDb.setGain(buffer.getMagnitude(0, 0, buffer.getNumSamples()));
+        inputValues.rightPeakDb.setGain(buffer.getMagnitude(1, 0, buffer.getNumSamples()));
+        inputMeter.update(inputValues);
         
     }
     

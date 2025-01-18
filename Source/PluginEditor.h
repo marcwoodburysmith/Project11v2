@@ -38,9 +38,8 @@ private:
     
     juce::AudioBuffer<float> buffer;
     
-    Meter inputMeter;
+    StereoMeter inputMeter{"PRE EQ"};
     
-    DbScale inputScale;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Project11v2AudioProcessorEditor)
 };

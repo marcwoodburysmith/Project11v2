@@ -21,10 +21,13 @@
 struct Meter : juce::Component
 {
     Meter();
+    Meter(juce::String aLabel);
     ~Meter() override;
     
     void paint (juce::Graphics&) override;
-    void update(float dbLevel);
+    void update(float dbLevel, float dbLevelRMS);
+    
+    juce::Rectangle<int> getMeterBounds();
     
 private:
     
@@ -36,4 +39,10 @@ private:
     DecayingValueHolder decayingValueHolder;
     
     Averager<float> averager {static_cast<size_t>(FRAME_RATE * AVG_TIME), NEGATIVE_INFINITY};
+    
+    const juce::String chanLabel;
+       
+    static const int labelSize {30};
+       
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Meter)
 };

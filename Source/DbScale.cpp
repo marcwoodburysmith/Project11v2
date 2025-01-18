@@ -52,7 +52,7 @@ std::vector<Tick> DbScale::getTicks(int dbDivision, juce::Rectangle<int> meterBo
     if (minDb > maxDb )
         std::swap(minDb, maxDb);
     
-    int numberOfTicks = (maxDb - minDb)/ dbDivision;
+    auto numberOfTicks = static_cast<size_t>( (maxDb - minDb)/ dbDivision );
     std::vector<Tick> ticks;
     ticks.reserve(numberOfTicks);
     
