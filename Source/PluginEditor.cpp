@@ -17,6 +17,7 @@ Project11v2AudioProcessorEditor::Project11v2AudioProcessorEditor (Project11v2Aud
    // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     addAndMakeVisible(inputMeter);
+    addAndMakeVisible(outputMeter);
 //    addAndMakeVisible(inputScale);
     setSize (800, 600);
     
@@ -56,28 +57,35 @@ void Project11v2AudioProcessorEditor::resized()
 #endif
     
     inputMeter.setBounds(bounds.removeFromLeft(scaleAndMeterWidth));
+    outputMeter.setBounds(bounds.removeFromRight(scaleAndMeterWidth));
 //    inputScale.buildBackgroundImage(TICK_INTERVAL, meterBounds, NEGATIVE_INFINITY, MAX_DECIBELS);
     
 }
 
 void Project11v2AudioProcessorEditor::timerCallback()
 {
-    //if there is something in the buffer pull it
-    auto& inputFifo = audioProcessor.inputBuffers;
+    auto& inputFifo = audioProcessor.inMeterValuesFifo;
+    auto& outputFifo = audioProcessor.outMeterValuesFifo;
     
     MeterValues inputValues;
     
     if (inputFifo.getNumAvailableForReading() > 0)
     {
-        while ( inputFifo.pull(buffer) )
+        while ( inputFifo.pull(inputValues) )
         {
             
         }
-//        auto magnitude = buffer.getMagnitude(0, 0, buffer.getNumSamples() );
-//        inputMeter.update(juce::Decibels::gainToDecibels(magnitude, NEGATIVE_INFINITY ) );
-        inputValues.leftPeakDb.setGain(buffer.getMagnitude(0, 0, buffer.getNumSamples()));
-        inputValues.rightPeakDb.setGain(buffer.getMagnitude(1, 0, buffer.getNumSamples()));
+
+//        inputValues.leftPeakDb.setGain(buffer.getMagnitude(0, 0, buffer.getNumSamples()));
+//        inputValues.rightPeakDb.setGain(buffer.getMagnitude(1, 0, buffer.getNumSamples()));
+//        
+//        inputValues.leftRmsDb.setGain(buffer.getRMSLevel(0, 0, buffer.getNumSamples()));
+//        inputValues.rightRmsDb.setGain(buffer.getRMSLevel(1, 0, buffer.getNumSamples()));
+
+        
         inputMeter.update(inputValues);
+        
+        
         
     }
     

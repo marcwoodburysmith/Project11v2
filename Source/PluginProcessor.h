@@ -21,6 +21,7 @@
 #include "FilterCoefficientGenerator.h"
 #include "ReleasePool.h"
 #include "FilterLink.h"
+#include "MeterValues.h"
 
 
 
@@ -122,9 +123,31 @@ public:
     void createFilterLayouts(ParamLayout& layout, Channel channel);
     
     Fifo<juce::AudioBuffer<float>, 30> inputBuffers;
+    
+    Fifo<MeterValues, 30>  inMeterValuesFifo;
+    Fifo<MeterValues, 30>  outMeterValuesFifo;
+    
 
 
 private:
+    
+    template<typename T, typename U>
+       void updateMeterFifos(T& fifo, U& buffer)
+       {
+           MeterValues inputValues;
+           
+           inputValues.leftPeakDb.setGain(buffer.getMagnitude(0, 0, buffer.getNumSamples()));
+           inputValues.rightPeakDb.setGain(buffer.getMagnitude(1, 0, buffer.getNumSamples()));
+           inputValues.leftRmsDb.setGain(buffer.getRMSLevel(0, 0, buffer.getNumSamples()));
+           inputValues.rightRmsDb.setGain(buffer.getRMSLevel(1, 0, buffer.getNumSamples()));
+           
+           fifo.push(inputValues);
+       }
+
+    
+    
+    
+    
     template <const int filterNum>
     FilterParameters getParametericFilterParams(Channel channel, double sampleRate)
     {

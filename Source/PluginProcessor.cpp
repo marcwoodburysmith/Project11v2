@@ -498,25 +498,17 @@ void Project11v2AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
     
     inputBuffers.push(buffer);
     
+    updateMeterFifos(inMeterValuesFifo, buffer);
+    
 #ifdef TESTMETER
     for( auto i = 0; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 #endif
     
-//    auto leftBlock = block.getSingleChannelBlock(0);
-//    auto rightBlock = block.getSingleChannelBlock(1);
-    
-//    static const float sqrt2 = juce::MathConstants<float>::sqrt2;
-//    static const float invSqrt2 = 1.0f/sqrt2;
 
     
     if(mode == ChannelMode::MidSide)
     {
-        
-//        leftBlock.add(rightBlock).multiplyBy(invSqrt2);
-//        // right = -1*(sqrt(2)R-Lnew) =  (L+R)/sqrt(2) -  sqrt(2)R= (L-R)/sqrt(2)
-//        rightBlock.multiplyBy(sqrt2).subtract(leftBlock).negate();
-//        performHadamard(leftBlock, rightBlock);
         performMidSideTransform(buffer);
     }
     
@@ -543,15 +535,13 @@ void Project11v2AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
     if(mode == ChannelMode::MidSide)
     {
         
-//       leftBlock.add(rightBlock).multiplyBy(invSqrt2);
-//       // right is (M-S)/sqrt(2).   Right =-1( sqrt(2)*S-Lnew) = (M+S)/sqrt(2) - sqrt(2)S = (M-S)/sqrt(2)
-//       rightBlock.multiplyBy(sqrt2).subtract(leftBlock).negate();
-//        performHadamard(leftBlock, rightBlock);
+
         performMidSideTransform(buffer);
     }
         
 
     outputTrim.process(stereoContext);
+    updateMeterFifos(outMeterValuesFifo, buffer);
 
 }
 
